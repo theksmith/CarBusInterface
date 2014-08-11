@@ -1,0 +1,169 @@
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <PreferenceCategory
+        android:key="category_actions"
+        android:title="@string/category_actions_title" >
+
+        <Preference
+            android:key="action_help"
+            android:title="@string/pref_title_action_help"
+            android:summary="@string/pref_summary_action_help" >
+            <intent
+                android:action="android.intent.action.VIEW"
+                android:data="https://github.com/theksmith/CarBusInterface" />
+        </Preference>
+
+        <Preference
+            android:key="action_restart"
+            android:title="@string/pref_title_action_restart"
+            android:summary="@string/pref_summary_action_restart" >
+            <intent
+                android:action="android.intent.action.REBOOT"
+                android:targetClass="com.theksmith.car_bus_interface.CarBusInterfaceActivity"
+                android:targetPackage="com.theksmith.car_bus_interface" />
+        </Preference>
+
+        <Preference
+            android:key="action_exit"
+            android:title="@string/pref_title_action_exit"
+            android:summary="@string/pref_summary_action_exit" >
+            <intent
+                android:action="android.intent.action.DELETE"
+                android:targetClass="com.theksmith.car_bus_interface.CarBusInterfaceActivity"
+                android:targetPackage="com.theksmith.car_bus_interface" />
+        </Preference>
+    </PreferenceCategory>
+
+    <PreferenceCategory
+        android:key="category_general"
+        android:title="@string/category_general_title" >
+
+        <CheckBoxPreference
+            android:key="auto_launch"
+            android:defaultValue="false"
+            android:title="@string/pref_title_auto_launch"
+            android:summary="@string/pref_summary_auto_launch" />
+
+        <com.theksmith.car_bus_interface.BluetoothListPreference
+            android:key="bluetooth_mac"
+            android:defaultValue=""
+            android:title="@string/pref_title_bluetooth_mac"
+            android:dialogTitle="@string/pref_title_bluetooth_mac" />
+
+        <EditTextPreference
+            android:key="elm_commands"
+            android:defaultValue="ATL1; ATE0; ATS1; ATH1; ATSP2; ATMR11;"
+            android:title="@string/pref_title_elm_commands"
+            android:dialogMessage="@string/pref_message_elm_commands"
+            android:selectAllOnFocus="false"
+            android:inputType="textNoSuggestions"
+            android:capitalize="none"
+            android:singleLine="true" />
+    </PreferenceCategory>
+
+    <PreferenceCategory
+        android:key="category_monitors"
+        android:title="@string/category_monitors_title" >
+
+        <EditTextPreference
+            android:key="elm_monitor1"
+            android:defaultValue="3D 11 00 80 C8 | false | 120 | 60 | 0 | 0 | *BUTTON_ROOT=KEYCODE_MEDIA_PLAY_PAUSE | "
+            android:title="@string/pref_title_elm_monitor1"
+            android:dialogMessage="@string/pref_message_elm_monitors"
+            android:selectAllOnFocus="false"
+            android:inputType="textNoSuggestions"
+            android:capitalize="none"
+            android:singleLine="false" />
+
+        <EditTextPreference
+            android:key="elm_monitor2"
+            android:defaultValue="3D 11 20 00 9B | false | 120 | 60 | 0 | 0 | *BUTTON_ROOT=KEYCODE_MEDIA_NEXT | "
+            android:title="@string/pref_title_elm_monitor2"
+            android:dialogMessage="@string/pref_message_elm_monitors"
+            android:selectAllOnFocus="false"
+            android:inputType="textNoSuggestions"
+            android:capitalize="none"
+            android:singleLine="false" />
+
+        <EditTextPreference
+            android:key="elm_monitor3"
+            android:defaultValue="3D 11 10 00 5A | false | 120 | 60 | 0 | 0 | *BUTTON_ROOT=KEYCODE_MEDIA_PREVIOUS | "
+            android:title="@string/pref_title_elm_monitor3"
+            android:dialogMessage="@string/pref_message_elm_monitors"
+            android:selectAllOnFocus="false"
+            android:inputType="textNoSuggestions"
+            android:capitalize="none"
+            android:singleLine="false" />
+
+        <EditTextPreference
+            android:key="elm_monitor4"
+            android:defaultValue="3D 11 00 02 D4 | false | 120 | 30 | 100 | 300 | *ALERT=Single Press | *ALERT=Double-Tap"
+            android:title="@string/pref_title_elm_monitor4"
+            android:dialogMessage="@string/pref_message_elm_monitors"
+            android:selectAllOnFocus="false"
+            android:inputType="textNoSuggestions"
+            android:capitalize="none"
+            android:singleLine="false" />
+
+        <EditTextPreference
+            android:key="elm_monitor5"
+            android:defaultValue="3D 11 04 00 C3 | false | 120 | 60 | 0 | 0 | *VOLUME=UP | "
+            android:title="@string/pref_title_elm_monitor5"
+            android:dialogMessage="@string/pref_message_elm_monitors"
+            android:selectAllOnFocus="false"
+            android:inputType="textNoSuggestions"
+            android:capitalize="none"
+            android:singleLine="false" />
+
+        <EditTextPreference
+            android:key="elm_monitor6"
+            android:defaultValue="3D 11 02 00 76 | false | 120 | 60 | 0 | 0 | *VOLUME=DOWN | "
+            android:title="@string/pref_title_elm_monitor6"
+            android:dialogMessage="@string/pref_message_elm_monitors"
+            android:selectAllOnFocus="false"
+            android:inputType="textNoSuggestions"
+            android:capitalize="none"
+            android:singleLine="false" />
+
+        <EditTextPreference
+            android:key="elm_monitor7"
+            android:defaultValue=""
+            android:title="@string/pref_title_elm_monitor7"
+            android:dialogMessage="@string/pref_message_elm_monitors"
+            android:selectAllOnFocus="false"
+            android:inputType="textNoSuggestions"
+            android:capitalize="none"
+            android:singleLine="false" />
+
+        <EditTextPreference
+            android:key="elm_monitor8"
+            android:defaultValue=""
+            android:title="@string/pref_title_elm_monitor8"
+            android:dialogMessage="@string/pref_message_elm_monitors"
+            android:selectAllOnFocus="false"
+            android:inputType="textNoSuggestions"
+            android:capitalize="none"
+            android:singleLine="false" />
+
+        <EditTextPreference
+            android:key="elm_monitor9"
+            android:defaultValue=""
+            android:title="@string/pref_title_elm_monitor9"
+            android:dialogMessage="@string/pref_message_elm_monitors"
+            android:selectAllOnFocus="false"
+            android:inputType="textNoSuggestions"
+            android:capitalize="none"
+            android:singleLine="false" />
+
+        <EditTextPreference
+            android:key="elm_monitor10"
+            android:defaultValue=""
+            android:title="@string/pref_title_elm_monitor10"
+            android:dialogMessage="@string/pref_message_elm_monitors"
+            android:selectAllOnFocus="false"
+            android:inputType="textNoSuggestions"
+            android:capitalize="none"
+            android:singleLine="false" />
+    </PreferenceCategory>
+
+</PreferenceScreen>
