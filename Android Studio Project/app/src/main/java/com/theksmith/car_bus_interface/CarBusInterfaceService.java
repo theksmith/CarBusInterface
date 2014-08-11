@@ -599,7 +599,7 @@ public class CarBusInterfaceService extends Service {
         if (immediate) {
             //we actually go ahead and send the command
 
-            if (mBTState != BTState.CONNECTED || mBTState != BTState.RX || mBTState != BTState.TX) {
+            if (mBTState != BTState.CONNECTED && mBTState != BTState.RX && mBTState != BTState.TX) {
                 Log.w(TAG, "elmSendCommand() : failed to send command (bluetooth not connected)");
 
                 if (mELMCommandQueueThread != null) {
