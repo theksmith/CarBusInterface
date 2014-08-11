@@ -1,0 +1,6 @@
+.DS_Store
+.idea/
+local.properties
+.gradle/
+build/
+proguard/

@@ -1,0 +1,34 @@
+apply plugin: 'com.android.application'
+
+android {
+    signingConfigs {
+        config {
+        }
+    }
+    compileSdkVersion 19
+    buildToolsVersion '20.0.0'
+    defaultConfig {
+        applicationId "com.theksmith.car_bus_interface"
+        minSdkVersion 16
+        targetSdkVersion 19
+        versionCode 1
+        versionName "0.4"
+    }
+    buildTypes {
+        debug {
+            buildConfigField "boolean", "SHOW_DEBUG_LOG", "true"
+        }
+        release {
+            buildConfigField "boolean", "SHOW_DEBUG_LOG", "false"
+
+            runProguard false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+}
+
+dependencies {
+    compile fileTree(dir: 'libs', include: ['*.jar'])
+    // You must install or update the Support Repository through the SDK manager to use this dependency.
+    compile 'com.android.support:support-v4:19.+'
+}

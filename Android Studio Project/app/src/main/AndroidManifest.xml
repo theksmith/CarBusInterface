@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.theksmith.car_bus_interface" >
+
+    <uses-feature android:name="android.hardware.bluetooth" />
+
+    <uses-permission android:name="android.permission.BLUETOOTH" />
+
+    <!-- informal best practice, now expected by SuperUser and SuperSU (https://plus.google.com/103583939320326217147/posts/T9xnMJEnzf1) -->
+    <uses-permission android:name="android.permission.ACCESS_SUPERUSER" />
+
+    <application
+        android:allowBackup="true"
+        android:icon="@drawable/ic_launcher"
+        android:label="@string/app_name"
+        android:excludeFromRecents="true"
+        android:noHistory="true" >
+
+        <activity
+            android:name="com.theksmith.car_bus_interface.CarBusInterfaceActivity"
+            android:label="@string/app_name"
+            android:excludeFromRecents="true"
+            android:noHistory="true"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar" >
+
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <activity
+            android:name="com.theksmith.car_bus_interface.CarBusInterfaceSettings"
+            android:label="@string/app_name"
+            android:excludeFromRecents="true"
+            android:noHistory="true"
+            android:exported="false" >
+        </activity>
+
+        <service
+            android:name="com.theksmith.car_bus_interface.CarBusInterfaceService"
+            android:label="@string/app_name"
+            android:exported="false" >
+        </service>
+
+        <receiver
+            android:name="com.theksmith.car_bus_interface.BluetoothBroadcastReceiver"
+            android:label="@string/app_name"
+            android:exported="false" >
+
+            <intent-filter>
+                <action android:name="android.bluetooth.adapter.action.STATE_CHANGED" />
+            </intent-filter>
+        </receiver>
+    </application>
+
+</manifest>
