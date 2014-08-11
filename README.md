@@ -1,12 +1,15 @@
+I'd love to know how many people find this useful. Please drop me a quick email (kristoffer@theksmith.com) or tweet (@theksmithphx) if you are able to use the app or even just reference some of the code! Thanks!
+
+
 # Car Bus Interface
 
-Android application for interfacing with a vehicle's communication bus via Bluetooth OBD2 dongle. It allows the Android device to respond to specific bus messages, such as those occurring when the user presses radio controls buttons.
+Android application for interfacing with a vehicle's communication bus via Bluetooth OBD2 dongle. It allows the Android device to respond to specific bus messages, such as those occurring when the user presses radio control buttons.
 
 This is an evolution of the [Steering Wheel Interface app](https://github.com/theksmith/Steering-Wheel-Interface), written to be more configurable and for Bluetooth instead of USB.
 
 ## Purpose
 
-The primary use case is for those with an Android based tablet acting as a [carputer](http://en.wikipedia.org/wiki/Carputer) who wish to have their steering wheel mounted factory stereo buttons control the Android device (adjust volume, change media tracks, etc). However, you could have the Android device respond to any message that is broadcast on the vehicle's bus - from a window roll down event to haven reached engine operating temperature.
+The primary use case is for those with an Android based tablet acting as a [carputer](http://en.wikipedia.org/wiki/Carputer) who wish to have their steering wheel mounted factory stereo buttons control the Android device (adjust volume, change media tracks, etc). However, you could have the Android device respond to any message that is broadcast on the vehicle's bus - from a window rolling down to having reached engine operating temperature.
 
 This is NOT an OBDII or "code reader" type application. An OBDII dongle is used only to provide a hardware interface to non-diagnostic vehicle buses which use standard OBDII protocols (SAE J1850 PWM, SAE J1850 VPW, ISO 9141-2, ISO 14230-4 KWP, ISO 15765-4 CAN, SAE J1939 CAN).
 
@@ -14,7 +17,7 @@ This is NOT an OBDII or "code reader" type application. An OBDII dongle is used 
 
 DISCLAIMER: EVERYTHING INCLUDED IN THIS REPOSITORY IS FOR INFORMATION PURPOSES ONLY. I AM NOT RESPONSIBLE FOR ANY DAMAGE TO VECHILES, DEVICES OR YOURSELF. DO NOT ATTEMPT ANY OF THE FOLLOWING UNLESS YOU KNOW WHAT YOU ARE DOING.
 
-### Testing the application (as-is):
+#### Testing the application (as-is):
 
 Requirements:
 
@@ -32,16 +35,15 @@ In my 2003 Jeep Grand Cherokee, the default configuration works with the factory
 +	Right DOWN button: Volume decrease
 +	Right CENTER button (single quick press): Shows an alert with text "Single press"
 +	Right CENTER button (quick double-tap): Shows an alert with text "Double-tap"
-
 +	Left UP button: Next track on currently focused media player (requires root)
 +	Left DOWN button: Previous track (requires root)
 +	Left CENTER button: Pause/Play (requires root)
 
-### Changing the car bus message monitors & responses
+#### Changing the car bus message monitors & responses:
 
 Documentation coming soon...
 
-### To use with other vehicles:
+#### To use with other vehicles:
 
 1.	Determine how to interface with the *Comfort Bus* or similar in your vehicle. This could be as simple as setting the correct protocol or could involve modifications to the scantool or vehicle wiring.
 
@@ -69,7 +71,7 @@ This project is licensed under the [MIT License](http://opensource.org/licenses/
 
 	https://github.com/theksmith/CarBusInterface
 
-	I'd really like to implement improved ways to interact with the entire system on *non-rooted* devices (go to the Home screen, pause any media player, etc.).
+	I'd really like to implement improved ways to interact with the Android system on *non-rooted* devices (go to the Home screen, pause any media player, etc.).
 
 +	The source project is from [Android Studio Beta 0.8.2](https://developer.android.com/sdk/installing/studio.html) but the code should move to Eclipse easily if you prefer that IDE.
 
@@ -77,14 +79,14 @@ This project is licensed under the [MIT License](http://opensource.org/licenses/
 
 ## Credits
 
-### Authors
+#### Authors
 
 +	Kristoffer Smith ([http://theksmith.com/](http://theksmith.com/))
 
-### Contributors
+#### Contributors
 
 +	None yet
 
-### Acknowledgments
+#### Acknowledgments
 
 +	CarBusInterfaceService.java was inspired by the Android SDK's BluetoothChatService.java sample file. 
