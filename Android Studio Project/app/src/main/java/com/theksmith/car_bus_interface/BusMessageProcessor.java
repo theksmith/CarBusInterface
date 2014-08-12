@@ -362,6 +362,10 @@ public class BusMessageProcessor extends Thread {
                 args = args[1].split(ACTION_PARAM_SEPARATOR_REGEX);
             }
 
+            for (int a = 0; a < args.length; a++) {
+                args[a] = args[a].trim();
+            }
+
             if (action.contains(ACTION_VOLUME) || action.contains(ACTION_VOLUME_HIDDEN)) {
                 final boolean visible = action.contains(ACTION_VOLUME);
 
