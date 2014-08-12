@@ -10,6 +10,7 @@ import android.view.KeyEvent;
 import android.widget.Toast;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 
 
 /**
@@ -53,11 +54,12 @@ public class BusMessageProcessor extends Thread {
     private static final String ACTION_MEDIA_BUTTON = "*MEDIA_BUTTON=";
     private static final String ACTION_BUTTON_ROOT = "*BUTTON_ROOT=";
     private static final String ACTION_INTENT_BASIC = "*INTENT=";
+    private static final String ACTION_TASKER = "*TASKER=";
 
     private final AndroidActions mActionsHelper;
 
 
-    public static enum EventType {
+    private static enum EventType {
         UNKNOWN, IGNORED, SHORT, LONG
     }
 
@@ -341,7 +343,7 @@ public class BusMessageProcessor extends Thread {
         return null;
     }
 
-    public void doAction(EventType type) {
+    private void doAction(EventType type) {
         if (D) Log.d(TAG, "doAction() : type= " + type);
 
         if ((mRespondToEveryEvent || type == EventType.SHORT) && mActionForShort != null && !mActionForShort.equals("")) {
@@ -379,6 +381,8 @@ public class BusMessageProcessor extends Thread {
             } else if (action.contains(ACTION_INTENT_BASIC)) {
                 final Uri uri = args.length == 2 ? Uri.parse(args[1]) : Uri.EMPTY;
                 mActionsHelper.sysSendImplicitIntent(args[0], uri);
+            } else if (action.contains(ACTION_TASKER)) {
+                mActionsHelper.taskerExecuteTask(args[0], Arrays.copyOfRange(args, 1, args.length));
             } else {
                 mActionsHelper.sysExecuteCommand(action);
             }

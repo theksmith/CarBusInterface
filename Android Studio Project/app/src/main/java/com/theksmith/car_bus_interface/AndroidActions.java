@@ -12,6 +12,8 @@ import android.util.Log;
 import android.view.KeyEvent;
 import android.widget.Toast;
 
+import net.dinglisch.android.tasker.TaskerIntent;
+
 import java.util.List;
 
 
@@ -203,9 +205,34 @@ public class AndroidActions {
         });
     }
 
+    /**
+     * attempts to execute a Tasker task (fails silently if Tasker is disabled, not installed, or if the task does not exist)
+     * @param task  the exact name of the Tasker task
+     * @param params  values of any params will be available to the Tasker task in variables %par1, %par2, etc.
+     */
     public void taskerExecuteTask(final String task, final String[] params) {
         if (D) Log.d(TAG, "taskerExecuteTask() : task= " + task + " params.length= " + params.length);
 
-        throw new UnsupportedOperationException("taskerExecuteTask() : Not yet implemented!");
+        new Handler().post(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    TaskerIntent intent = new TaskerIntent(task);
+
+                    for (String param : params) {
+                        intent.addParameter(param);
+                    }
+
+                    mContext.sendBroadcast(intent);
+                } catch (Exception e) {
+                    Log.e(TAG, "taskerExecuteTask() : unexpected exception : exception= " + e.getMessage(), e);
+
+                    if (!mSilentErrors) {
+                        final String text = mContext.getApplicationInfo().name + ": " + mContext.getResources().getString(R.string.msg_app_error_tasker) + " " + task;
+                        Toast.makeText(mContext, text, Toast.LENGTH_SHORT).show();
+                    }
+                }
+            }
+        });
     }
 }
