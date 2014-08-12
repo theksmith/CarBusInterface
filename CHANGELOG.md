@@ -1,3 +1,9 @@
+# Version 0.7 (8/12/2014)
+
++	Updated help link to point to the new project Wiki
++	Documentation updates
+
+
 # Version 0.6 (8/11/2014)
 
 +	Added action type for sending a basic implicit intent, example: *INTENT=android.intent.action.VIEW**http://google.com

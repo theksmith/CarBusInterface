@@ -23,7 +23,7 @@ This project is licensed under the [MIT License](http://opensource.org/licenses/
 
 	https://github.com/theksmith/CarBusInterface
 
-+	The source project is from [Android Studio Beta 0.8.2](https://developer.android.com/sdk/installing/studio.html) but the code should move to Eclipse easily if you prefer that IDE.
++	The source project is setup for [Android Studio Beta 0.8.6](https://developer.android.com/sdk/installing/studio.html) but the code should move to Eclipse easily if you prefer that IDE.
 
 +	No third party libraries are required.
 
