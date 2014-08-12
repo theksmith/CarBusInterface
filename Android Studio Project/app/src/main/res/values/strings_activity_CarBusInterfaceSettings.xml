@@ -6,7 +6,6 @@
     <string name="pref_title_action_help">Help</string>
     <string name="pref_summary_action_help">Tap here to open a web page with info about this app and instructions on how to use it</string>
 
-
     <string name="pref_title_action_restart">Apply Changes &amp; Restart App</string>
     <string name="pref_summary_action_restart">Tap here to restart the app after making settings changes</string>
 
