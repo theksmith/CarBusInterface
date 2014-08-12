@@ -4,5 +4,7 @@
     <string name="msg_app_error_executing_command">Error while executing command</string>
     <string name="msg_app_error_simulating_media_btn">Error while simulating media button</string>
     <string name="msg_app_error_changing_volume">Error while attempting to change system volume</string>
+    <string name="msg_app_error_implicit_intent">Error while attempting to send implicit intent with action/uri</string>
+
 
 </resources>
