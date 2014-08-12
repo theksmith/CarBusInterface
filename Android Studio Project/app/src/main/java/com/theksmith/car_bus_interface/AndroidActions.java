@@ -2,12 +2,19 @@ package com.theksmith.car_bus_interface;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.content.pm.ResolveInfo;
 import android.media.AudioManager;
+import android.net.Uri;
 import android.os.Handler;
 import android.os.SystemClock;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.widget.Toast;
+
+import net.dinglisch.android.tasker.TaskerIntent;
+
+import java.util.List;
 
 
 /**
@@ -35,6 +42,33 @@ public class AndroidActions {
             mInstance = new AndroidActions(appContext, silentErrors);
         }
         return mInstance;
+    }
+
+    /**
+     * send a very basic implicit intent (useful for operations like opening a URL, dialing a phone number, etc.)
+     * @param action  full string representation of the intent action, examples: "android.intent.action.DIAL", "android.intent.action.VIEW", etc.
+     * @param uri  the intent data URI string, examples: "tel:123", "http://google.com", etc.
+     */
+    public void sysSendImplicitIntent(final String action, final Uri uri) {
+        if (D) Log.d(TAG, "sysSendImplicitIntent() : action= " + action + " uri= " + uri.toString());
+
+        new Handler().post(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    Intent intent = new Intent(action, uri);
+                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    mContext.startActivity(intent);
+                } catch (Exception e) {
+                    Log.e(TAG, "sysSendImplicitIntent() : unexpected exception : exception= " + e.getMessage(), e);
+
+                    if (!mSilentErrors) {
+                        final String text = mContext.getApplicationInfo().name + ": " + mContext.getResources().getString(R.string.msg_app_error_implicit_intent) + " " + action + " / " + uri;
+                        Toast.makeText(mContext, text, Toast.LENGTH_SHORT).show();
+                    }
+                }
+            }
+        });
     }
 
     /**
@@ -67,7 +101,7 @@ public class AndroidActions {
                 try {
                     Runtime.getRuntime().exec(command);
                 } catch (Exception e) {
-                    Log.e(TAG, "doAction() : unexpected exception : exception= " + e.getMessage(), e);
+                    Log.e(TAG, "sysExecuteCommand() : unexpected exception : exception= " + e.getMessage(), e);
 
                     if (!mSilentErrors) {
                         final String text = mContext.getApplicationInfo().name + ": " + mContext.getResources().getString(R.string.msg_app_error_executing_command) + " " + command;
@@ -164,6 +198,37 @@ public class AndroidActions {
 
                     if (!mSilentErrors) {
                         final String text = mContext.getApplicationInfo().name + ": " + mContext.getResources().getString(R.string.msg_app_error_changing_volume);
+                        Toast.makeText(mContext, text, Toast.LENGTH_SHORT).show();
+                    }
+                }
+            }
+        });
+    }
+
+    /**
+     * attempts to execute a Tasker task (fails silently if Tasker is disabled, not installed, or if the task does not exist)
+     * @param task  the exact name of the Tasker task
+     * @param params  values of any params will be available to the Tasker task in variables %par1, %par2, etc.
+     */
+    public void taskerExecuteTask(final String task, final String[] params) {
+        if (D) Log.d(TAG, "taskerExecuteTask() : task= " + task + " params.length= " + params.length);
+
+        new Handler().post(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    TaskerIntent intent = new TaskerIntent(task);
+
+                    for (String param : params) {
+                        intent.addParameter(param);
+                    }
+
+                    mContext.sendBroadcast(intent);
+                } catch (Exception e) {
+                    Log.e(TAG, "taskerExecuteTask() : unexpected exception : exception= " + e.getMessage(), e);
+
+                    if (!mSilentErrors) {
+                        final String text = mContext.getApplicationInfo().name + ": " + mContext.getResources().getString(R.string.msg_app_error_tasker) + " " + task;
                         Toast.makeText(mContext, text, Toast.LENGTH_SHORT).show();
                     }
                 }
