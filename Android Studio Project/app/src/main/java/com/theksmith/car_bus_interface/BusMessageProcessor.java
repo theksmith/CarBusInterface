@@ -1,6 +1,7 @@
 package com.theksmith.car_bus_interface;
 
 import android.content.Context;
+import android.net.Uri;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.SystemClock;
@@ -9,6 +10,7 @@ import android.view.KeyEvent;
 import android.widget.Toast;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 
 
 /**
@@ -44,11 +46,15 @@ public class BusMessageProcessor extends Thread {
 
     private static long PROCESSOR_TICK_TIME = 15; //milliseconds
 
+    private static final String ACTION_PARAM_SEPARATOR_REGEX = "\\*\\*";
+
     private static final String ACTION_ALERT = "*ALERT=";
     private static final String ACTION_VOLUME = "*VOLUME=";
     private static final String ACTION_VOLUME_HIDDEN = "*VOLUME_HIDDEN=";
     private static final String ACTION_MEDIA_BUTTON = "*MEDIA_BUTTON=";
     private static final String ACTION_BUTTON_ROOT = "*BUTTON_ROOT=";
+    private static final String ACTION_INTENT_BASIC = "*INTENT=";
+    private static final String ACTION_TASKER = "*TASKER=";
 
     private final AndroidActions mActionsHelper;
 
@@ -351,26 +357,36 @@ public class BusMessageProcessor extends Thread {
         if (D) Log.d(TAG, "doAction() : action= " + action);
 
         try {
+            String[] args = action.split("=", 2);
+            if (args.length == 2) {
+                args = args[1].split(ACTION_PARAM_SEPARATOR_REGEX);
+            }
+
+            for (int a = 0; a < args.length; a++) {
+                args[a] = args[a].trim();
+            }
+
             if (action.contains(ACTION_VOLUME) || action.contains(ACTION_VOLUME_HIDDEN)) {
-                final String[] args = action.split("=");
                 final boolean visible = action.contains(ACTION_VOLUME);
 
-                if (args[1].equals("UP")) {
+                if (args[0].equals("UP")) {
                     mActionsHelper.audioVolumeUp(visible);
-                } else if (args[1].equals("DOWN")) {
+                } else if (args[0].equals("DOWN")) {
                     mActionsHelper.audioVolumeDown(visible);
                 } else {
                     throw new IllegalArgumentException("Only supports value UP or DOWN");
                 }
             } else if (action.contains(ACTION_ALERT)) {
-                final String[] args = action.split("=");
-                mActionsHelper.sysAlert(args[1]);
+                mActionsHelper.sysAlert(args[0]);
             } else if (action.contains(ACTION_MEDIA_BUTTON)) {
-                final String[] args = action.split("=");
-                mActionsHelper.sysSimulateMediaButton(KeyEvent.keyCodeFromString(args[1]), false);
+                mActionsHelper.sysSimulateMediaButton(KeyEvent.keyCodeFromString(args[0]), false);
             } else if (action.contains(ACTION_BUTTON_ROOT)) {
-                final String[] args = action.split("=");
-                mActionsHelper.sysSimulateButton(KeyEvent.keyCodeFromString(args[1]));
+                mActionsHelper.sysSimulateButton(KeyEvent.keyCodeFromString(args[0]));
+            } else if (action.contains(ACTION_INTENT_BASIC)) {
+                final Uri uri = args.length == 2 ? Uri.parse(args[1]) : Uri.EMPTY;
+                mActionsHelper.sysSendImplicitIntent(args[0], uri);
+            } else if (action.contains(ACTION_TASKER)) {
+                mActionsHelper.taskerExecuteTask(args[0], Arrays.copyOfRange(args, 1, args.length));
             } else {
                 mActionsHelper.sysExecuteCommand(action);
             }

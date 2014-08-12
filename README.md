@@ -1,4 +1,4 @@
-I'd love to know how many people find this useful. Please drop me a quick email (kristoffer@theksmith.com) or tweet (@theksmithphx) if you are able to use the app or even just reference some of the code! Thanks!
+I'd love to hear if you find this project useful in any way - please send a quick email (kristoffer@theksmith.com) or tweet (@theksmithphx)!
 
 
 # Car Bus Interface
@@ -71,8 +71,6 @@ This project is licensed under the [MIT License](http://opensource.org/licenses/
 
 	https://github.com/theksmith/CarBusInterface
 
-	I'd really like to implement improved ways to interact with the Android system on *non-rooted* devices (go to the Home screen, pause any media player, etc.).
-
 +	The source project is from [Android Studio Beta 0.8.2](https://developer.android.com/sdk/installing/studio.html) but the code should move to Eclipse easily if you prefer that IDE.
 
 +	No third party libraries are required.
@@ -90,3 +88,4 @@ This project is licensed under the [MIT License](http://opensource.org/licenses/
 #### Acknowledgments
 
 +	CarBusInterfaceService.java was inspired by the Android SDK's BluetoothChatService.java sample file. 
++	TaskerIntent.java was pulled from http://tasker.dinglisch.net/code/TaskerIntent.java to support executing Tasker tasks.

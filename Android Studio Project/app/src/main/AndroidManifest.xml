@@ -5,6 +5,7 @@
     <uses-feature android:name="android.hardware.bluetooth" />
 
     <uses-permission android:name="android.permission.BLUETOOTH" />
+    <uses-permission android:name="net.dinglisch.android.tasker.PERMISSION_RUN_TASKS" />
 
     <!-- informal best practice, now expected by SuperUser and SuperSU (https://plus.google.com/103583939320326217147/posts/T9xnMJEnzf1) -->
     <uses-permission android:name="android.permission.ACCESS_SUPERUSER" />
