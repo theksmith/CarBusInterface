@@ -10,7 +10,7 @@
             android:summary="@string/pref_summary_action_help" >
             <intent
                 android:action="android.intent.action.VIEW"
-                android:data="https://github.com/theksmith/CarBusInterface" />
+                android:data="https://github.com/theksmith/CarBusInterface/wiki" />
         </Preference>
 
         <Preference
