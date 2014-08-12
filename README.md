@@ -7,7 +7,7 @@ Android application for interfacing with a vehicle's communication bus via Bluet
 
 This is an evolution of the [Steering Wheel Interface app](https://github.com/theksmith/Steering-Wheel-Interface), written to be more configurable and for Bluetooth instead of USB.
 
-*Please visit the Wiki for how to use this app: https://github.com/theksmith/CarBusInterface/wiki*
+**Please visit our Wiki for how to get started using the app: https://github.com/theksmith/CarBusInterface/wiki**
 
 
 ## Copyright and License
