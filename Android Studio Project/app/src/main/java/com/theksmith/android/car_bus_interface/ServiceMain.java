@@ -397,6 +397,13 @@ public class ServiceMain extends Service {
         stop();
     }
 
+    private void btNotPaired() {
+        if (D) Log.d(TAG, "btNotEnabled()");
+
+        setNotificationText(getString(R.string.msg_stopped), getString(R.string.msg_bt_not_paired));
+        stop();
+    }
+
     private void btNotConfigured() {
         if (D) Log.d(TAG, "btNotConfigured()");
 
@@ -445,6 +452,11 @@ public class ServiceMain extends Service {
             BluetoothSocket tmpSocket = null;
 
             try {
+                if (mmDevice == null || mmDevice.getBondState() != BluetoothDevice.BOND_BONDED) {
+                    btNotPaired();
+                    return;
+                }
+
                 /*
                 //for some OBD2 dongles you need to specify a "channel"
                 //the Android public API for a BluetoothDevice doesn't currently expose a socket creation method with that capability
