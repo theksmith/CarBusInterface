@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 
+import com.theksmith.android.helpers.AppGlobals;
 import com.theksmith.android.helpers.AppState;
 
 
@@ -27,11 +28,13 @@ public class ActivityMain extends Activity {
     protected void onCreate(final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        AppGlobals globals = AppGlobals.getInstance(getApplicationContext());
+
         appCheckForFirstRun();
 
         final String action = getIntent().getAction();
 
-        if (D) Log.d(TAG, "onStart() : action= " + action);
+        if (D) Log.d(TAG, "onCreate() : action= " + action);
 
         if (action.equals(Intent.ACTION_EDIT)) {
             //ensure the service is still running
@@ -49,8 +52,19 @@ public class ActivityMain extends Activity {
 
             activitySettingsKill();
         } else {
+            //in certain scenarios onCreate() may fire instead of onResume() even though the app is "alive"
+            //if the app really is just launching the global var should be null
+            final Boolean isRunning = (Boolean) globals.get(R.string.app_global_b_app_is_running);
+            if (isRunning != null && isRunning) {
+                //this is a really "resume" instead of a "launch" so show the settings screen
+                activitySettingsShow();
+            }
+
             serviceMainStart();
         }
+
+        //use the global var to mark the app as "alive"
+        globals.set(R.string.app_global_b_app_is_running, true);
 
         //exit this activity
         finish();

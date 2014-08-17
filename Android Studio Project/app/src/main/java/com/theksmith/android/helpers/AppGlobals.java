@@ -46,8 +46,8 @@ public class AppGlobals {
      * @param keyResId  a resource identifier from strings_class_app_globals.xml (example: R.string.app_global_b_some_item)
      * @return  the stored value
      */
-    public Object globalVarGet(final int keyResId) {
-        if (DD) Log.d(TAG, "globalVarGet()");
+    public Object get(final int keyResId) {
+        if (DD) Log.d(TAG, "get()");
 
         return mGlobalVars.get(mAppContext.getString(keyResId));
     }
@@ -58,8 +58,8 @@ public class AppGlobals {
      * @param keyResId  a resource identifier from strings_class_app_globals.xml (example: R.string.app_global_b_some_item)
      * @param value  the value to store
      */
-    public void globalVarSet(final int keyResId, final Object value) {
-        if (DD) Log.d(TAG, "globalVarSet()");
+    public void set(final int keyResId, final Object value) {
+        if (DD) Log.d(TAG, "set()");
 
         mGlobalVars.put(mAppContext.getString(keyResId), value);
     }
