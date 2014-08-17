@@ -1,4 +1,4 @@
-I'd love to hear if you find this project useful in any way - please send a quick note: kristoffer@theksmith.com or [@theksmithphx](https://twitter.com/theksmithphx)!
+I'd love to hear if you find this project useful in any way. Please send a quick note to kristoffer@theksmith.com or [@theksmithphx](https://twitter.com/theksmithphx)!
 
 
 # Car Bus Interface
@@ -19,11 +19,11 @@ This project is licensed under the [MIT License](http://opensource.org/licenses/
 
 ## Ongoing Development
 
-+	Pull requests are welcome! Please contact me if you'd like to do a major re-work or extension of the project.
+Pull requests are welcome! Please contact me if you'd like to do a major re-work or extension of the project.
 
-	https://github.com/theksmith/CarBusInterface
+Project home: https://github.com/theksmith/CarBusInterface
 
-+	The source project is setup for [Android Studio Beta 0.8.6](https://developer.android.com/sdk/installing/studio.html) but the code should move to Eclipse easily if you prefer that IDE.
++	The source code project is setup for [Android Studio Beta 0.8.6](https://developer.android.com/sdk/installing/studio.html) but should move to Eclipse easily if you prefer that IDE.
 
 +	No third party libraries are required.
 
