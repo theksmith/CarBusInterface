@@ -1,9 +1,7 @@
-package com.theksmith.car_bus_interface;
+package com.theksmith.android.car_bus_interface;
 
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.PackageManager;
-import android.content.pm.ResolveInfo;
 import android.media.AudioManager;
 import android.net.Uri;
 import android.os.Handler;
@@ -14,8 +12,6 @@ import android.widget.Toast;
 
 import net.dinglisch.android.tasker.TaskerIntent;
 
-import java.util.List;
-
 
 /**
  * singleton helper class for performing common actions on android device
@@ -24,21 +20,29 @@ import java.util.List;
  */
 public class AndroidActions {
     private static final String TAG = "AndroidActions";
-    private static final boolean D = BuildConfig.SHOW_DEBUG_LOG;
+    private static final boolean D = BuildConfig.SHOW_DEBUG_LOG_LEVEL > 0;
 
     private static AndroidActions mInstance = null;
 
-    private final Context mContext;
+    private final Context mAppContext;
     private final boolean mSilentErrors;
 
+    private final String mAppName;
 
-    private AndroidActions(final Context context, boolean silentErrors) {
-        mContext = context.getApplicationContext();
+
+    private AndroidActions(final Context appContext, boolean silentErrors) {
+        if (D) Log.d(TAG, "AndroidActions()");
+
+        mAppContext = appContext.getApplicationContext();
         mSilentErrors = silentErrors;
+
+        mAppName = appContext.getApplicationInfo().name;
     }
 
-    public static AndroidActions getInstance(final Context appContext, final boolean silentErrors){
-        if(mInstance == null) {
+    public static AndroidActions getInstance(final Context appContext, final boolean silentErrors) {
+        if (D) Log.d(TAG, "getInstance()");
+
+        if (mInstance == null) {
             mInstance = new AndroidActions(appContext, silentErrors);
         }
         return mInstance;
@@ -58,13 +62,13 @@ public class AndroidActions {
                 try {
                     Intent intent = new Intent(action, uri);
                     intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                    mContext.startActivity(intent);
+                    mAppContext.startActivity(intent);
                 } catch (Exception e) {
                     Log.e(TAG, "sysSendImplicitIntent() : unexpected exception : exception= " + e.getMessage(), e);
 
                     if (!mSilentErrors) {
-                        final String text = mContext.getApplicationInfo().name + ": " + mContext.getResources().getString(R.string.msg_app_error_implicit_intent) + " " + action + " / " + uri;
-                        Toast.makeText(mContext, text, Toast.LENGTH_SHORT).show();
+                        final String text = mAppName + ": " + mAppContext.getString(R.string.msg_error_implicit_intent) + " " + action + " / " + uri;
+                        Toast.makeText(mAppContext, text, Toast.LENGTH_SHORT).show();
                     }
                 }
             }
@@ -73,7 +77,7 @@ public class AndroidActions {
 
     /**
      * show a toast notification
-     * @param text  the message to show
+     * @param text  the data to show
      */
     public void sysAlert(final String text) {
         if (D) Log.d(TAG, "sysAlert() : text= " + text);
@@ -82,7 +86,7 @@ public class AndroidActions {
             @Override
             public void run() {
                 try {
-                    Toast.makeText(mContext, text, Toast.LENGTH_SHORT).show();
+                    Toast.makeText(mAppContext, text, Toast.LENGTH_SHORT).show();
                 } catch (Exception ignored) {}
             }
         });
@@ -104,8 +108,8 @@ public class AndroidActions {
                     Log.e(TAG, "sysExecuteCommand() : unexpected exception : exception= " + e.getMessage(), e);
 
                     if (!mSilentErrors) {
-                        final String text = mContext.getApplicationInfo().name + ": " + mContext.getResources().getString(R.string.msg_app_error_executing_command) + " " + command;
-                        Toast.makeText(mContext, text, Toast.LENGTH_SHORT).show();
+                        final String text = mAppName + ": " + mAppContext.getString(R.string.msg_error_executing_command) + " " + command;
+                        Toast.makeText(mAppContext, text, Toast.LENGTH_SHORT).show();
                     }
                 }
             }
@@ -144,18 +148,18 @@ public class AndroidActions {
                         Intent intent = new Intent(Intent.ACTION_MEDIA_BUTTON, null);
                         KeyEvent event = new KeyEvent(now, now, KeyEvent.ACTION_DOWN, keyCode, 0);
                         intent.putExtra(Intent.EXTRA_KEY_EVENT, event);
-                        mContext.sendOrderedBroadcast(intent, null);
+                        mAppContext.sendOrderedBroadcast(intent, null);
 
                         intent = new Intent(Intent.ACTION_MEDIA_BUTTON, null);
                         event = new KeyEvent(now, now, KeyEvent.ACTION_UP, keyCode, 0);
                         intent.putExtra(Intent.EXTRA_KEY_EVENT, event);
-                        mContext.sendOrderedBroadcast(intent, null);
+                        mAppContext.sendOrderedBroadcast(intent, null);
                     } catch (Exception e) {
                         Log.e(TAG, "sysSimulateMediaButton() : unexpected exception : exception= " + e.getMessage(), e);
 
                         if (!mSilentErrors) {
-                            final String text = mContext.getApplicationInfo().name + ": " + mContext.getResources().getString(R.string.msg_app_error_simulating_media_btn) + " " + keyCode;
-                            Toast.makeText(mContext, text, Toast.LENGTH_SHORT).show();
+                            final String text = mAppName + ": " + mAppContext.getString(R.string.msg_error_simulating_media_btn) + " " + keyCode;
+                            Toast.makeText(mAppContext, text, Toast.LENGTH_SHORT).show();
                         }
                     }
                 }
@@ -170,14 +174,14 @@ public class AndroidActions {
             @Override
             public void run() {
                 try {
-                    final AudioManager mAudioManager = (AudioManager) mContext.getSystemService(Context.AUDIO_SERVICE);
+                    final AudioManager mAudioManager = (AudioManager) mAppContext.getSystemService(Context.AUDIO_SERVICE);
                     mAudioManager.adjustStreamVolume(AudioManager.STREAM_MUSIC, AudioManager.ADJUST_RAISE, (visible ? AudioManager.FLAG_SHOW_UI : 0));
                 } catch (Exception e) {
                     Log.e(TAG, "audioVolumeUp() : unexpected exception : exception= " + e.getMessage(), e);
 
                     if (!mSilentErrors) {
-                        final String text = mContext.getApplicationInfo().name + ": " + mContext.getResources().getString(R.string.msg_app_error_changing_volume);
-                        Toast.makeText(mContext, text, Toast.LENGTH_SHORT).show();
+                        final String text = mAppName + ": " + mAppContext.getString(R.string.msg_error_changing_volume);
+                        Toast.makeText(mAppContext, text, Toast.LENGTH_SHORT).show();
                     }
                 }
             }
@@ -191,14 +195,14 @@ public class AndroidActions {
             @Override
             public void run() {
                 try {
-                    final AudioManager mAudioManager = (AudioManager) mContext.getSystemService(Context.AUDIO_SERVICE);
+                    final AudioManager mAudioManager = (AudioManager) mAppContext.getSystemService(Context.AUDIO_SERVICE);
                     mAudioManager.adjustStreamVolume(AudioManager.STREAM_MUSIC, AudioManager.ADJUST_LOWER, (visible ? AudioManager.FLAG_SHOW_UI : 0));
                 } catch (Exception e) {
                     Log.e(TAG, "audioVolumeDown() : unexpected exception : exception= " + e.getMessage(), e);
 
                     if (!mSilentErrors) {
-                        final String text = mContext.getApplicationInfo().name + ": " + mContext.getResources().getString(R.string.msg_app_error_changing_volume);
-                        Toast.makeText(mContext, text, Toast.LENGTH_SHORT).show();
+                        final String text = mAppName + ": " + mAppContext.getString(R.string.msg_error_changing_volume);
+                        Toast.makeText(mAppContext, text, Toast.LENGTH_SHORT).show();
                     }
                 }
             }
@@ -223,13 +227,13 @@ public class AndroidActions {
                         intent.addParameter(param);
                     }
 
-                    mContext.sendBroadcast(intent);
+                    mAppContext.sendBroadcast(intent);
                 } catch (Exception e) {
                     Log.e(TAG, "taskerExecuteTask() : unexpected exception : exception= " + e.getMessage(), e);
 
                     if (!mSilentErrors) {
-                        final String text = mContext.getApplicationInfo().name + ": " + mContext.getResources().getString(R.string.msg_app_error_tasker) + " " + task;
-                        Toast.makeText(mContext, text, Toast.LENGTH_SHORT).show();
+                        final String text = mAppName + ": " + mAppContext.getString(R.string.msg_error_tasker) + " " + task;
+                        Toast.makeText(mAppContext, text, Toast.LENGTH_SHORT).show();
                     }
                 }
             }

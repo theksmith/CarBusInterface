@@ -1,0 +1,31 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context="com.theksmith.android.car_bus_interface.ActivityTerminal" >
+
+    <item android:id="@+id/action_scroll"
+        android:title="@string/action_scroll"
+        android:orderInCategory="100"
+        android:showAsAction="never"
+        android:checkable="true"
+        android:checked="true" />
+
+    <item android:id="@+id/action_show_time"
+        android:title="@string/action_show_time"
+        android:orderInCategory="200"
+        android:showAsAction="never"
+        android:checkable="true"
+        android:checked="true" />
+
+    <item android:id="@+id/action_show_elapsed"
+        android:title="@string/action_show_elapsed"
+        android:orderInCategory="300"
+        android:showAsAction="never"
+        android:checkable="true"
+        android:checked="true" />
+
+    <item android:id="@+id/action_send_startup"
+        android:title="@string/action_send_startup"
+        android:orderInCategory="300"
+        android:showAsAction="never" />
+
+</menu>

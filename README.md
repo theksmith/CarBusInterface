@@ -1,20 +1,20 @@
-I'd love to hear if you find this project useful in any way - please send me a quick msg: kristoffer@theksmith.com or [@theksmithphx](https://twitter.com/theksmithphx)!
+I'd love to hear if you find this project useful in any way - please send a quick note: kristoffer@theksmith.com or [@theksmithphx](https://twitter.com/theksmithphx)!
 
 
 # Car Bus Interface
 
-Android application for interfacing with a vehicle's communication bus via Bluetooth OBD2 dongle. It allows the Android device to respond to specific bus messages, such as those occurring when the user presses radio control buttons.
+An android application for interfacing with a vehicle's communication bus via Bluetooth OBD2 dongle (ELM327 compatible). It allows the Android device to respond to specific bus messages, such as those occurring when the user presses physical buttons inside the vehicle.
 
-This is an evolution of the [Steering Wheel Interface app](https://github.com/theksmith/Steering-Wheel-Interface), written to be more configurable and for Bluetooth instead of USB.
+This is an evolution of the [Steering Wheel Interface app](https://github.com/theksmith/Steering-Wheel-Interface), written to be more configurable and for Bluetooth dongles instead of USB.
 
-**Please visit our Wiki for how to get started using the app: https://github.com/theksmith/CarBusInterface/wiki**
+**Please visit the Wiki for how to get started using the app: https://github.com/theksmith/CarBusInterface/wiki**
 
 
 ## Copyright and License
 
 Copyright 2014 Kristoffer Smith and other contributors.
 
-This project is licensed under the [MIT License](http://opensource.org/licenses/MIT).
+This project is licensed under the [MIT License](http://opensource.org/licenses/MIT) - i.e. do what ya want but give credit.
 
 
 ## Ongoing Development
@@ -43,5 +43,5 @@ This project is licensed under the [MIT License](http://opensource.org/licenses/
 
 #### Acknowledgments
 
-+	CarBusInterfaceService.java was inspired by the Android SDK's BluetoothChatService.java sample file. 
++	CarBusInterfaceService.java was inspired by the Android SDK's BluetoothChatService.java sample. 
 +	TaskerIntent.java was pulled from http://tasker.dinglisch.net/code/TaskerIntent.java to support executing Tasker tasks.

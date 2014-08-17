@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <string name="msg_app_btlist_empty">No devices available or bluetooth disabled</string>
+    <string name="msg_btlist_empty">No devices available or bluetooth disabled</string>
 
 </resources>

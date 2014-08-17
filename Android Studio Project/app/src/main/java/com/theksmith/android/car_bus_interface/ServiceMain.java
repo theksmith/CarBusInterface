@@ -1,4 +1,4 @@
-package com.theksmith.car_bus_interface;
+package com.theksmith.android.car_bus_interface;
 
 import android.app.Notification;
 import android.app.NotificationManager;
@@ -13,17 +13,26 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.os.Handler;
 import android.os.IBinder;
+import android.os.Message;
+import android.os.Messenger;
+import android.os.RemoteException;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import com.theksmith.android.helpers.AppState;
+
+import static com.theksmith.android.car_bus_interface.BusData.*;
 
 
 /*
@@ -34,13 +43,23 @@ if connecting ok, but not receiving for a certain time period, maybe should try 
 
 /**
  * primary foreground Service which runs even after main activity is destroyed
- * attempts to connect with the BT OBD2 device, send commands, and then listens and processes any responses
+ * attempts to connect with the bluetooth interface device, send commands, then listens and processes any responses
  *
  * @author Kristoffer Smith <kristoffer@theksmith.com>
  */
-public class CarBusInterfaceService extends Service {
-    private static final String TAG = "CarBusInterfaceService";
-    private static final boolean D = BuildConfig.SHOW_DEBUG_LOG;
+public class ServiceMain extends Service {
+    private static final String TAG = "ServiceMain";
+    private static final boolean D = BuildConfig.SHOW_DEBUG_LOG_LEVEL > 0;
+    private static final boolean DD = BuildConfig.SHOW_DEBUG_LOG_LEVEL > 1;
+
+    private final Messenger mBoundIncomingMessenger = new Messenger(new BoundIncomingHandler());
+    private ArrayList<Messenger> mBoundClients = new ArrayList<Messenger>();
+
+    public static final int BOUND_MSG_REGISTER_CLIENT = 1;
+    public static final int BOUND_MSG_UNREGISTER_CLIENT = 2;
+    public static final int BOUND_MSG_NOTIFY_BUS_DATA = 3;
+    public static final int BOUND_MSG_SEND_BUS_COMMAND = 4;
+    public static final int BOUND_MSG_SEND_STARTUP_COMMANDS = 5;
 
     private SharedPreferences mSettings;
 
@@ -53,10 +72,10 @@ public class CarBusInterfaceService extends Service {
     private String mNoticeError;
 
     private static enum BTState {
-        DESTROYING, NONE, CONNECTING, CONNECTED, RX, TX
+        DESTROYING, NONE, CONNECTING, IDLE, RX, TX
     }
 
-    private volatile BTState mBTState;
+    private volatile BTState mBTState = BTState.NONE;
 
     private volatile BluetoothAdapter mBTAdapter;
     private BTConnectThread mBTConnectThread;
@@ -77,21 +96,14 @@ public class CarBusInterfaceService extends Service {
     private String mELMResponseBuffer;
     private ELMCommandQueueThread mELMCommandQueueThread;
 
-    protected HashMap<String, BusMessageProcessor> mBusMsgProcessors;
+    private HashMap<String, BusMessageProcessor> mBusMsgProcessors;
 
 
-    public CarBusInterfaceService() {
-        if (D) Log.d(TAG, "CarBusInterfaceService()");
+    public ServiceMain() {
+        if (D) Log.d(TAG, "ServiceMain()");
 
         mBTAdapter = BluetoothAdapter.getDefaultAdapter();
         mNoticeBuilder = new Notification.Builder(this);
-    }
-
-    @Override
-    public IBinder onBind(Intent intent) {
-        Log.e(TAG, "onBind() not supported!");
-
-        throw new UnsupportedOperationException("onBind() not supported!");
     }
 
     @Override
@@ -102,13 +114,14 @@ public class CarBusInterfaceService extends Service {
 
         mSettings = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
 
+        //setup a receiver to watch for bluetooth adapter state changes
         final IntentFilter filter = new IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED);
         this.registerReceiver(mBTStateReceiver, filter);
 
-        final Intent intent = new Intent(this, CarBusInterfaceActivity.class);
+        final Intent intent = new Intent(this, ActivityMain.class);
         intent.setAction(Intent.ACTION_EDIT);
         final TaskStackBuilder stack = TaskStackBuilder.create(this);
-        stack.addParentStack(CarBusInterfaceActivity.class);
+        stack.addParentStack(ActivityMain.class);
         stack.addNextIntent(intent);
         PendingIntent resultPendingIntent = stack.getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);
 
@@ -116,10 +129,15 @@ public class CarBusInterfaceService extends Service {
         mNoticeBuilder.setContentIntent(resultPendingIntent);
         mNoticeBuilder.setSmallIcon(R.drawable.ic_notice);
         mNoticeBuilder.setContentTitle(getString(R.string.app_name));
-        mNoticeBuilder.setContentText(getString(R.string.msg_app_starting));
+
+        mNoticeStatus = getString(R.string.msg_starting);
+        mNoticeBuilder.setContentText(mNoticeStatus);
 
         mNoticeManager = (NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE);
         mNoticeManager.notify(PERSISTENT_NOTIFICATION_ID, mNoticeBuilder.build());
+
+        //clear the debug terminal on each new run
+        AppState.setString(getApplicationContext(), R.string.app_state_s_termninal_contents, "");
     }
 
     @Override
@@ -145,6 +163,77 @@ public class CarBusInterfaceService extends Service {
         start();
 
         return START_STICKY;
+    }
+
+    @Override
+    public IBinder onBind(Intent intent) {
+        if (D) Log.d(TAG, "onBind()");
+
+        return mBoundIncomingMessenger.getBinder();
+    }
+
+    private boolean isBound() {
+        return mBoundClients != null && mBoundClients.size() > 0;
+    }
+
+    private void BoundNotifyBusData(final BusData data) {
+        if (DD) Log.d(TAG, "BoundNotifyBusData() : data.data= " + data.data);
+
+        if (isBound()) {
+            for (int i = mBoundClients.size() - 1; i >= 0; i--) {
+                try {
+                    mBoundClients.get(i).send(Message.obtain(null, BOUND_MSG_NOTIFY_BUS_DATA, data));
+                } catch (RemoteException e) {
+                    //this client is no longer connected, remove it from the list
+                    mBoundClients.remove(i);
+                }
+            }
+        }
+    }
+
+    private void BoundNotifyNotReady() {
+        BusData data = new BusData(getString(R.string.msg_error_bound_error_prefix) + " | " + getNotificationText(), BusDataType.ERROR, false);
+        BoundNotifyBusData(data);
+    }
+
+    class BoundIncomingHandler extends Handler {
+        @Override
+        public void handleMessage(Message message) {
+            if (D) Log.d(TAG, "BoundIncomingHandler : handleMessage() : msg.what= " + message.what);
+
+            synchronized (ServiceMain.this) {
+                switch (message.what) {
+                    case BOUND_MSG_REGISTER_CLIENT:
+                        mBoundClients.add(message.replyTo);
+                        break;
+
+                    case BOUND_MSG_UNREGISTER_CLIENT:
+                        mBoundClients.remove(message.replyTo);
+                        break;
+
+                    case BOUND_MSG_SEND_BUS_COMMAND:
+                        if (!isBTConnected()) {
+                            BoundNotifyNotReady();
+                        } else {
+                            elmSendCommand(message.obj.toString(), true);
+                        }
+
+                        break;
+
+                    case BOUND_MSG_SEND_STARTUP_COMMANDS:
+                        if (!isBTConnected()) {
+                            BoundNotifyNotReady();
+                        } else {
+                            elmInitStartupCommands();
+                        }
+
+                        break;
+
+                    default:
+                        super.handleMessage(message);
+                }
+            }
+        }
     }
 
     private synchronized void start() {
@@ -216,7 +305,6 @@ public class CarBusInterfaceService extends Service {
         }
     }
 
-
     /**
      * update the text for the persistent notification associated with this service
      *
@@ -232,16 +320,24 @@ public class CarBusInterfaceService extends Service {
             mNoticeError = error;
         }
 
+        mNoticeBuilder.setContentText(getNotificationText());
+
+        mNoticeManager = (NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE);
+        mNoticeManager.notify(PERSISTENT_NOTIFICATION_ID, mNoticeBuilder.build());
+    }
+
+    private synchronized String getNotificationText() {
         String text = mNoticeStatus == null ? "" : mNoticeStatus;
-        if (mNoticeStatus != null & !mNoticeStatus.equals("") && mNoticeError != null & !mNoticeError.equals("")) {
+        if (mNoticeStatus != null && !mNoticeStatus.equals("") && mNoticeError != null && !mNoticeError.equals("")) {
             text += " | ";
         }
         text += mNoticeError == null ? "" : mNoticeError;
 
-        mNoticeBuilder.setContentText(text);
+        return text;
+    }
 
-        mNoticeManager = (NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE);
-        mNoticeManager.notify(PERSISTENT_NOTIFICATION_ID, mNoticeBuilder.build());
+    private synchronized boolean isBTConnected() {
+        return mBTState == BTState.IDLE || mBTState == BTState.RX || mBTState == BTState.TX;
     }
 
     private synchronized void btConnect(final BluetoothDevice device) {
@@ -257,7 +353,7 @@ public class CarBusInterfaceService extends Service {
 
         mBTState = BTState.CONNECTING;
 
-        setNotificationText(getString(R.string.msg_app_connecting) + " " + device.getName() + "...", "");
+        setNotificationText(getString(R.string.msg_connecting) + " " + device.getName() + "...", "");
     }
 
     private synchronized void btConnected(final BluetoothSocket socket, final BluetoothDevice device) {
@@ -273,15 +369,15 @@ public class CarBusInterfaceService extends Service {
         mBTIOThread = new BTIOThread(socket);
         mBTIOThread.start();
 
-        mBTState = BTState.CONNECTED;
+        mBTState = BTState.IDLE;
 
-        setNotificationText(getString(R.string.msg_app_connected) + " " + device.getName(), "");
+        setNotificationText(getString(R.string.msg_connected) + " " + device.getName(), "");
 
         elmInit();
     }
 
     private synchronized void btReceivedData(final byte[] buffer, final int length) {
-        if (D) Log.d(TAG, "btReceivedData()");
+        if (DD) Log.d(TAG, "btReceivedData()");
 
         mBTState = BTState.RX;
         elmBufferData(new String(buffer, 0, length));
@@ -297,14 +393,14 @@ public class CarBusInterfaceService extends Service {
     private void btNotEnabled() {
         if (D) Log.d(TAG, "btNotEnabled()");
 
-        setNotificationText(getString(R.string.msg_app_stopped), getString(R.string.msg_app_bt_not_enabled));
+        setNotificationText(getString(R.string.msg_stopped), getString(R.string.msg_bt_not_enabled));
         stop();
     }
 
     private void btNotConfigured() {
         if (D) Log.d(TAG, "btNotConfigured()");
 
-        setNotificationText(getString(R.string.msg_app_stopped), getString(R.string.msg_app_bt_not_configured));
+        setNotificationText(getString(R.string.msg_stopped), getString(R.string.msg_bt_not_configured));
         stop();
     }
 
@@ -324,12 +420,14 @@ public class CarBusInterfaceService extends Service {
         @Override
         public void onReceive(final Context context, final Intent intent) {
             if (intent.getAction().equals(BluetoothAdapter.ACTION_STATE_CHANGED)) {
+                if (D) Log.d(TAG, "mBTStateReceiver : onReceive()");
+
                 final int state = intent.getIntExtra(BluetoothAdapter.EXTRA_STATE, BluetoothAdapter.ERROR);
 
                 if (state == BluetoothAdapter.STATE_OFF || state == BluetoothAdapter.STATE_TURNING_OFF) {
                     btNotEnabled();
                 } else if (state == BluetoothAdapter.STATE_ON) {
-                    CarBusInterfaceService.this.start();
+                    ServiceMain.this.start();
                 }
             }
         }
@@ -387,11 +485,9 @@ public class CarBusInterfaceService extends Service {
             try {
                 mmSocket.connect();
 
-                CarBusInterfaceService.this.btConnected(mmSocket, mmDevice);
+                ServiceMain.this.btConnected(mmSocket, mmDevice);
             } catch (Exception e) {
                 Log.w(TAG, "BTConnectThread.run() : failed to connect : exception= " + e.getMessage(), e);
-
-                Thread.currentThread().interrupt();
 
                 try {
                     mmSocket.close();
@@ -400,11 +496,10 @@ public class CarBusInterfaceService extends Service {
                 }
 
                 try {
-                    sleep(CarBusInterfaceService.BT_CONNECTION_RETRY_WAIT);
+                    sleep(ServiceMain.BT_CONNECTION_RETRY_WAIT);
                 } catch (InterruptedException ignored) {}
 
-                CarBusInterfaceService.this.btConnectionFailed();
-                return;
+                ServiceMain.this.btConnectionFailed();
             }
         }
 
@@ -456,13 +551,11 @@ public class CarBusInterfaceService extends Service {
             while (!mmCancelling && mmInStream != null) {
                 try {
                     length = mmInStream.read(buffer);
-                    CarBusInterfaceService.this.btReceivedData(buffer.clone(), length);
+                    ServiceMain.this.btReceivedData(buffer.clone(), length);
                 } catch (Exception e) {
                     Log.w(TAG, "BTIOThread.run() : exception while reading : exception= " + e.getMessage(), e);
 
-                    Thread.currentThread().interrupt();
-
-                    CarBusInterfaceService.this.btConnectionLost();
+                    ServiceMain.this.btConnectionLost();
                     break;
                 }
             }
@@ -499,20 +592,26 @@ public class CarBusInterfaceService extends Service {
     private void elmBadConfig(final String noticeErrorText) {
         if (D) Log.d(TAG, "elmBadConfig()");
 
-        setNotificationText(getString(R.string.msg_app_stopped), noticeErrorText);
+        setNotificationText(getString(R.string.msg_stopped), noticeErrorText);
         stop();
     }
 
     private synchronized void elmInit() {
         if (D) Log.d(TAG, "elmInit()");
 
-        //setup monitors and their actions
-        //todo: the way we are storing these preferences is a quick hack, we need a custom preference screen to configure any number of these
-
         /*
-        FYI: you don't have to setup these processors if you don't need handle repeating messages (to skip bounces, identify short/long/double-press type scenarios, etc.)
-        if you are hacking on this code you can just setup a case statement in the elmParseResponse() method to respond to messages as they come in
+        FYI: you don't have to make this call to setup the processors if you don't need handle repeating messages (to skip bounces, identify short/long/double-press type scenarios, etc.)
+        instead you could just setup a case statement in the elmParseResponse() method to respond to messages as they come in
         */
+        elmInitBusMsgProcessors();
+
+        elmInitStartupCommands();
+    }
+
+    private synchronized void elmInitBusMsgProcessors() {
+        if (D) Log.d(TAG, "elmInitBusMsgProcessors()");
+
+        //todo: the way we are storing these preferences is a quick hack, we need a custom preference screen to configure any number of these
 
         mBusMsgProcessors = new HashMap<String, BusMessageProcessor>();
 
@@ -551,27 +650,28 @@ public class CarBusInterfaceService extends Service {
                     mBusMsgProcessors.put(msg, processor);
                 }
             } catch (Exception e) {
-                Log.w(TAG, "elmInit() : exception while setting up message processors : monitor #" + m + " : exception= " + e.getMessage(), e);
+                Log.w(TAG, "elmInit() : exception while setting up data processors : monitor #" + m + " : exception= " + e.getMessage(), e);
 
-                elmBadConfig(getString(R.string.msg_app_elm_monitors_not_configured));
+                elmBadConfig(getString(R.string.msg_bus_monitors_not_configured));
                 return;
             }
         }
 
         if (mBusMsgProcessors == null || mBusMsgProcessors.size() <= 0) {
-            Log.w(TAG, "elmInit() : no message processors");
+            Log.w(TAG, "elmInit() : no data processors");
 
-            elmBadConfig(getString(R.string.msg_app_elm_monitors_not_configured));
-            return;
+            elmBadConfig(getString(R.string.msg_bus_monitors_not_configured));
         }
+    }
 
-        //send startup commands
+    private synchronized void elmInitStartupCommands() {
+        if (D) Log.d(TAG, "elmInitStartupCommands()");
 
         final String prefElmCommands = mSettings.getString("elm_commands", "");
         if (prefElmCommands.equals("")) {
             Log.w(TAG, "elmInit() : no startup commands");
 
-            elmBadConfig(getString(R.string.msg_app_elm_commands_not_configured));
+            elmBadConfig(getString(R.string.msg_bus_commands_not_configured));
             return;
         }
 
@@ -579,7 +679,7 @@ public class CarBusInterfaceService extends Service {
         if (commands.length <= 0) {
             Log.w(TAG, "elmInit() : invalid startup commands");
 
-            elmBadConfig(getString(R.string.msg_app_elm_commands_not_configured));
+            elmBadConfig(getString(R.string.msg_bus_commands_not_configured));
             return;
         }
 
@@ -591,15 +691,14 @@ public class CarBusInterfaceService extends Service {
     private synchronized void elmSendCommand(String command, final boolean immediate) {
         if (D) Log.d(TAG, "elmSendCommand() : command= " + command + " immediate= " + immediate);
 
-        if (mELMCommandQueueThread == null) {
-            mELMCommandQueueThread = new ELMCommandQueueThread();
-            mELMCommandQueueThread.start();
+        if (command == null || command.equals("")) {
+            return;
         }
 
         if (immediate) {
-            //we actually go ahead and send the command
+            //send the command right now
 
-            if (mBTState != BTState.CONNECTED && mBTState != BTState.RX && mBTState != BTState.TX) {
+            if (!isBTConnected()) {
                 Log.w(TAG, "elmSendCommand() : failed to send command (bluetooth not connected)");
 
                 if (mELMCommandQueueThread != null) {
@@ -611,7 +710,11 @@ public class CarBusInterfaceService extends Service {
                 return;
             }
 
-            if (mBTState != BTState.CONNECTED) {
+            //alert any bound clients of this TX
+            BusData data = new BusData(command, BusDataType.TX, false);
+            BoundNotifyBusData(data);
+
+            if (mBTState != BTState.IDLE) {
                 //if we are in the middle of an RX/TX need to also send an empty command first to abort the current operation
                 command = ELM_COMMAND_TERMINATOR + command;
             }
@@ -620,12 +723,18 @@ public class CarBusInterfaceService extends Service {
             btWriteData(command.getBytes());
         } else {
             //normally we just queue the command
+
+            if (mELMCommandQueueThread == null) {
+                mELMCommandQueueThread = new ELMCommandQueueThread();
+                mELMCommandQueueThread.start();
+            }
+
             mELMCommandQueueThread.add(command);
         }
     }
 
     private synchronized void elmBufferData(final String data) {
-        if (D) Log.d(TAG, "elmBufferData() : data= " + data);
+        if (DD) Log.d(TAG, "elmBufferData() : data= " + data);
 
         if (mELMResponseBuffer == null) {
             mELMResponseBuffer = "";
@@ -645,7 +754,7 @@ public class CarBusInterfaceService extends Service {
             final String part2 = data.substring(m.end());
             if (completed && part2.equals("")) {
                 //the data was a clean end to a response (terminator with no trailing data)
-                mBTState = BTState.CONNECTED;
+                mBTState = BTState.IDLE;
             } else if (!part2.equals("")) {
                 //the data continued after the separator or terminator
                 elmBufferData(part2);
@@ -662,14 +771,21 @@ public class CarBusInterfaceService extends Service {
 
         if (D) Log.d(TAG, "elmParseResponse() : response= " + response + " completed= " + completed);
 
+        BusDataType messageType = BusDataType.RX;
+
         /*
         FYI: here is where you would handle specific bus messages directly if you didn't need the BusMessageProcessor system
         */
 
         BusMessageProcessor processor = mBusMsgProcessors.get(response);
         if (processor != null) {
+            messageType = BusDataType.RX_MONITORED;
             processor.logEvent();
         }
+
+        //alert any bound clients of this RX
+        BusData data = new BusData(response, messageType, completed);
+        BoundNotifyBusData(data);
     }
 
     private class ELMCommandQueueThread extends Thread {
@@ -689,20 +805,18 @@ public class CarBusInterfaceService extends Service {
             try {
                 String command;
                 while (!mmCancelling) {
-                    if (mBTState != CarBusInterfaceService.BTState.CONNECTED) {
+                    if (mBTState != ServiceMain.BTState.IDLE) {
                         //socket is busy with a TX or RX
                         try {
-                            sleep(CarBusInterfaceService.ELM_COMMAND_QUEUE_BUSY_WAIT_TIME);
+                            sleep(ServiceMain.ELM_COMMAND_QUEUE_BUSY_WAIT_TIME);
                         } catch (InterruptedException ignored) {}
                     } else {
                         command = mmQueue.take();
-                        CarBusInterfaceService.this.elmSendCommand(command, true);
+                        ServiceMain.this.elmSendCommand(command, true);
                     }
                 }
             } catch (Exception e) {
                 Log.w(TAG, "ELMCommandQueueThread.run() : exception while processing queue : exception= " + e.getMessage(), e);
-
-                Thread.currentThread().interrupt();
             }
         }
 

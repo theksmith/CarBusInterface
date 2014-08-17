@@ -1,4 +1,4 @@
-package com.theksmith.car_bus_interface;
+package com.theksmith.android.car_bus_interface;
 
 import android.bluetooth.BluetoothAdapter;
 import android.content.BroadcastReceiver;
@@ -17,7 +17,7 @@ import android.util.Log;
  */
 public class BluetoothBroadcastReceiver extends BroadcastReceiver {
     private static final String TAG = "BluetoothBroadcastReceiver";
-    private static final boolean D = BuildConfig.SHOW_DEBUG_LOG;
+    private static final boolean D = BuildConfig.SHOW_DEBUG_LOG_LEVEL > 0;
 
 
     public BluetoothBroadcastReceiver() {
@@ -37,7 +37,7 @@ public class BluetoothBroadcastReceiver extends BroadcastReceiver {
 
                 if (D) Log.d(TAG, "onReceive() : state= " + state);
 
-                final Intent i = new Intent(context, CarBusInterfaceService.class);
+                final Intent i = new Intent(context, ServiceMain.class);
 
                 if (state == BluetoothAdapter.STATE_ON) {
                     context.stopService(i);
