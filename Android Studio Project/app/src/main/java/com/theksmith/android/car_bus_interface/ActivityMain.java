@@ -72,6 +72,8 @@ public class ActivityMain extends Activity {
     }
 
     private void appCheckForFirstRun() {
+        if (D) Log.d(TAG, "appCheckForFirstRun()");
+
         final boolean firstRunCompleted = AppState.getBoolean(getApplicationContext(), R.string.app_state_b_first_run_completed, false);
 
         if (!firstRunCompleted) {
@@ -82,21 +84,29 @@ public class ActivityMain extends Activity {
     }
 
     private void serviceMainStart() {
+        if (D) Log.d(TAG, "serviceMainStart()");
+
         //ensure the service is started (does NOT create duplicate if already running)
         startService(new Intent(getApplicationContext(), ServiceMain.class));
     }
 
     private void serviceMainKill() {
+        if (D) Log.d(TAG, "serviceMainKill()");
+
         //kill the service
         stopService(new Intent(getApplicationContext(), ServiceMain.class));
     }
 
     private void activitySettingsShow() {
+        if (D) Log.d(TAG, "activitySettingsShow()");
+
         //show the settings screen
         startActivityForResult(new Intent(getApplicationContext(), ActvitySettings.class), ACTIVITY_ID_SETTINGS);
     }
 
     private void activitySettingsKill() {
+        if (D) Log.d(TAG, "activitySettingsKill()");
+
         finishActivity(ACTIVITY_ID_SETTINGS);
     }
 }
