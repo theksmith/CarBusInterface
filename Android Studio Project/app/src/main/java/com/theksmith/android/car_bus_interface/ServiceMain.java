@@ -31,15 +31,18 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import com.theksmith.android.helpers.AppState;
-
 import static com.theksmith.android.car_bus_interface.BusData.*;
 
 
 /*
-todo: need improvements with error handling...
-after certain number of connection attempts should we give up? (i.e. don't keep trying to re-connect forever)
-if connecting ok, but not receiving for a certain time period, maybe should try a reset (ATZ) at some point? (must have a preference for if/when as some cars might not send anything for long periods)
+todo: improve handling of potential error conditions...
+
+ -  if connected ok, but not receiving for a certain time period, maybe should try a reset (ATWS or ATZ) at some point?
+    we would need a setting for if/when as some cars might not send anything for long periods
+    otherwise is there a better way to check the real current health of the device/socket?
+
+ -  after certain number of connection attempts should we give up? (i.e. don't keep trying to re-connect forever)
+
 */
 
 /**
@@ -82,7 +85,7 @@ public class ServiceMain extends Service {
     private BTConnectThread mBTConnectThread;
     private BTIOThread mBTIOThread;
 
-    private static final long BT_CONNECTION_RETRY_WAIT = 1000; //milliseconds
+    private static final long BT_CONNECTION_RETRY_WAIT = 2000; //milliseconds
 
     //this matches the termination of a MESSAGE (could be multiple within a response) or the entire RESPONSE
     //explained: match "\r" or ">" at a minimum and also variations of " \r\n >" while also trying to trim out extra spaces, CRs, and LFs
@@ -103,8 +106,9 @@ public class ServiceMain extends Service {
     public ServiceMain() {
         if (D) Log.d(TAG, "ServiceMain()");
 
-        mBTAdapter = BluetoothAdapter.getDefaultAdapter();
         mNoticeBuilder = new Notification.Builder(this);
+
+        mBTAdapter = BluetoothAdapter.getDefaultAdapter();
     }
 
     @Override
@@ -113,11 +117,14 @@ public class ServiceMain extends Service {
 
         if (D) Log.d(TAG, "onCreate()");
 
+        //create this as we need to get user preferences several times
         mSettings = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
 
         //setup a receiver to watch for bluetooth adapter state changes
         final IntentFilter filter = new IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED);
         this.registerReceiver(mBTStateReceiver, filter);
+
+        //setup the persistent notification as required for any service that returns START_STICKY
 
         final Intent intent = new Intent(this, ActivityMain.class);
         intent.setAction(Intent.ACTION_EDIT);
@@ -127,6 +134,7 @@ public class ServiceMain extends Service {
         PendingIntent resultPendingIntent = stack.getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);
 
         mNoticeBuilder.setOngoing(true);
+        mNoticeBuilder.setPriority(Notification.PRIORITY_LOW);
         mNoticeBuilder.setContentIntent(resultPendingIntent);
         mNoticeBuilder.setSmallIcon(R.drawable.ic_notice);
         mNoticeBuilder.setContentTitle(getString(R.string.app_name));
@@ -136,9 +144,6 @@ public class ServiceMain extends Service {
 
         mNoticeManager = (NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE);
         mNoticeManager.notify(PERSISTENT_NOTIFICATION_ID, mNoticeBuilder.build());
-
-        //clear the debug terminal on each new run
-        AppState.setString(getApplicationContext(), R.string.app_state_s_termninal_contents, "");
     }
 
     @Override
@@ -148,8 +153,11 @@ public class ServiceMain extends Service {
         if (D) Log.d(TAG, "onDestroy()");
 
         mBTState = BTState.DESTROYING;
+
         this.unregisterReceiver(mBTStateReceiver);
+
         stop();
+
         mNoticeManager.cancelAll();
     }
 
@@ -166,6 +174,9 @@ public class ServiceMain extends Service {
             start();
         }
 
+        //this tells the system to keep the service running
+        //it could still be killed due to low resources, but would automatically be re-started when possible
+        //in that situation onStartCommand() is called with a null intent (if there are not already other pending start requests)
         return START_STICKY;
     }
 
@@ -219,7 +230,7 @@ public class ServiceMain extends Service {
                         if (!isBTConnected()) {
                             BoundNotifyNotReady();
                         } else {
-                            elmSendCommandNow(message.obj.toString());
+                            elmSendCommand(message.obj.toString());
                         }
 
                         break;
@@ -280,8 +291,20 @@ public class ServiceMain extends Service {
         mBTState = BTState.NONE;
     }
 
-    private synchronized void cancelAllThreads() {
+    private void cancelAllThreads() {
         if (D) Log.d(TAG, "cancelAllThreads()");
+
+        if (mBTConnectThread != null) {
+            mBTConnectThread.cancel();
+            mBTConnectThread = null;
+        }
+
+        if (mBTIOThread != null) {
+            mBTIOThread.cancel();
+            mBTIOThread = null;
+        }
+
+        elmDestroyCommandQueue();
 
         if (mBusMsgProcessors != null) {
             for (String msg : mBusMsgProcessors.keySet()) {
@@ -291,18 +314,6 @@ public class ServiceMain extends Service {
                 }
             }
             mBusMsgProcessors = null;
-        }
-
-        elmDestroyCommandQueue();
-
-        if (mBTIOThread != null) {
-            mBTIOThread.cancel();
-            mBTIOThread = null;
-        }
-
-        if (mBTConnectThread != null) {
-            mBTConnectThread.cancel();
-            mBTConnectThread = null;
         }
     }
 
@@ -327,7 +338,7 @@ public class ServiceMain extends Service {
         mNoticeManager.notify(PERSISTENT_NOTIFICATION_ID, mNoticeBuilder.build());
     }
 
-    private synchronized String getNotificationText() {
+    private String getNotificationText() {
         String text = mNoticeStatus == null ? "" : mNoticeStatus;
         if (mNoticeStatus != null && !mNoticeStatus.equals("") && mNoticeError != null && !mNoticeError.equals("")) {
             text += " | ";
@@ -380,14 +391,20 @@ public class ServiceMain extends Service {
     private synchronized void btReceivedData(final byte[] buffer, final int length) {
         if (DD) Log.d(TAG, "btReceivedData()");
 
+        //flag state as RX
+        //this will only change back to IDLE once the RX is found to be _complete_
         mBTState = BTState.RX;
+
         elmBufferData(new String(buffer, 0, length));
     }
 
     private synchronized void btWriteData(final byte[] data) {
         if (D) Log.d(TAG, "btWriteData()");
 
+        //flag state as TX
+        //since we always expect some response from a command, this state will only change once an RX is received
         mBTState = BTState.TX;
+
         mBTIOThread.write(data);
     }
 
@@ -496,21 +513,33 @@ public class ServiceMain extends Service {
             }
 
             try {
+                //doing this BEFORE the connect attempt should ensure that regardless of how we got here we don't try to re-connect too fast which can give the exception "RFCOMM_CreateConnection - already opened state:2, RFC state:4, MCB state:5"
+                //we were only doing this in the catch below before the call to btConnectionFailed()
+                SystemClock.sleep(ServiceMain.BT_CONNECTION_RETRY_WAIT);
+
+                //todo: temporary debugging while trying to find an edge case problem...
+                if (mmSocket == null) {
+                    Log.e(TAG, "BTConnectThread.run() : NULL SOCKET!");
+                }
+
+                //todo: temporary debugging while trying to find an edge case problem...
+                if (mmSocket.isConnected()) {
+                    Log.e(TAG, "BTConnectThread.run() : ALREADY CONNECTED!");
+                }
+
                 mmSocket.connect();
 
                 ServiceMain.this.btConnected(mmSocket, mmDevice);
             } catch (Exception e) {
                 Log.w(TAG, "BTConnectThread.run() : failed to connect : exception= " + e.getMessage(), e);
 
-                try {
-                    mmSocket.close();
-                } catch (Exception e2) {
-                    Log.w(TAG, "BTConnectThread.run() : failed to close socket after connection failure : exception= " + e2.getMessage(), e2);
+                if (mmSocket != null && mmSocket.isConnected()) {
+                    try {
+                        mmSocket.close();
+                    } catch (Exception e2) {
+                        Log.w(TAG, "BTConnectThread.run() : failed to close socket after connection failure : exception= " + e2.getMessage(), e2);
+                    }
                 }
-
-                try {
-                    sleep(ServiceMain.BT_CONNECTION_RETRY_WAIT);
-                } catch (InterruptedException ignored) {}
 
                 ServiceMain.this.btConnectionFailed();
             }
@@ -521,10 +550,12 @@ public class ServiceMain extends Service {
 
             mmCancelling = true;
 
-            try {
-                mmSocket.close();
-            } catch (Exception e) {
-                Log.w(TAG, "BTConnectThread.cancel() : failed to close socket : exception= " + e.getMessage(), e);
+            if (mmSocket != null && mmSocket.isConnected()) {
+                try {
+                    mmSocket.close();
+                } catch (Exception e) {
+                    Log.w(TAG, "BTConnectThread.cancel() : failed to close socket : exception= " + e.getMessage(), e);
+                }
             }
         }
     }
@@ -563,14 +594,22 @@ public class ServiceMain extends Service {
 
             while (!mmCancelling && mmInStream != null) {
                 try {
-                    length = mmInStream.read(buffer);
-                    ServiceMain.this.btReceivedData(buffer.clone(), length);
+                    if (mmInStream.available() > 0) {
+                        length = mmInStream.read(buffer);
+                        ServiceMain.this.btReceivedData(buffer.clone(), length);
+                    }
                 } catch (Exception e) {
                     Log.w(TAG, "BTIOThread.run() : exception while reading : exception= " + e.getMessage(), e);
 
                     ServiceMain.this.btConnectionLost();
-                    break;
+                    return;
                 }
+            }
+
+            if (!mmCancelling) {
+                Log.w(TAG, "BTIOThread.run() : lost input stream");
+
+                ServiceMain.this.btConnectionLost();
             }
         }
 
@@ -594,10 +633,12 @@ public class ServiceMain extends Service {
 
             mmCancelling = true;
 
-            try {
-                mmSocket.close();
-            } catch (Exception e) {
-                Log.w(TAG, "BTIOThread.cancel() : failed to close socket : exception= " + e.getMessage(), e);
+            if (mmSocket != null && mmSocket.isConnected()) {
+                try {
+                    mmSocket.close();
+                } catch (Exception e) {
+                    Log.w(TAG, "BTIOThread.cancel() : failed to close socket : exception= " + e.getMessage(), e);
+                }
             }
         }
     }
@@ -697,7 +738,7 @@ public class ServiceMain extends Service {
         }
 
         elmDestroyCommandQueue();
-        elmSendStopCommandNow();
+        elmSendBreak();
 
         for (String command : commands) {
             elmQueueCommand(command.trim());
@@ -719,15 +760,15 @@ public class ServiceMain extends Service {
         mELMCommandQueueThread.add(command);
     }
 
-    private synchronized void elmSendCommandNow(String command) {
-        if (D) Log.d(TAG, "elmSendCommandNow() : command= " + command);
+    private synchronized void elmSendCommand(String command) {
+        if (D) Log.d(TAG, "elmSendCommand() : command= " + command);
 
         if (command == null || command.equals("")) {
             return;
         }
 
         if (!isBTConnected()) {
-            Log.w(TAG, "elmSendCommandNow() : failed to send command (bluetooth not connected)");
+            Log.w(TAG, "elmSendCommand() : failed to send command (bluetooth not connected)");
 
             btConnectionLost();
             return;
@@ -738,23 +779,27 @@ public class ServiceMain extends Service {
         BoundNotifyBusData(data);
 
         if (mBTState != BTState.IDLE) {
-            //if we are in the middle of an RX/TX need to also send an empty command first to abort the current operation
-            elmSendStopCommandNow();
-
-            //give the empty command a few millis to finish
-            SystemClock.sleep(50);
+            //we are in the middle of something (like a long RX)
+            elmSendBreak();
         }
 
         command += ELM_COMMAND_TERMINATOR;
         btWriteData(command.getBytes());
     }
 
-    private synchronized void elmSendStopCommandNow() {
-        final String command = " " + ELM_COMMAND_TERMINATOR;
+    private synchronized void elmSendBreak() {
+        if (D) Log.d(TAG, "elmSendBreak()");
+
+        final String command = String.valueOf((char)0x00);
         btWriteData(command.getBytes());
+
+        //give the device time to realize the break before whatever called this method tries to continue
+        SystemClock.sleep(250);
     }
 
-    private synchronized void elmDestroyCommandQueue() {
+    private void elmDestroyCommandQueue() {
+        if (D) Log.d(TAG, "elmDestroyCommandQueue()");
+
         if (mELMCommandQueueThread != null) {
             mELMCommandQueueThread.cancel();
             mELMCommandQueueThread = null;
@@ -775,11 +820,17 @@ public class ServiceMain extends Service {
             //the data contained a separator or terminator
             final String part1 = data.substring(0, m.start());
             mELMResponseBuffer += part1;
+
+
+            //todo: fix this to work when elmSendBreak(); was called - i.e. what comes back then to mark it complete? maybe can just change the ELM_RESPONSE_SEPARATOR_REGEX to include it?
             boolean completed = m.group().contains(ELM_RESPONSE_TERMINATOR);
+
+
             elmParseResponse(mELMResponseBuffer, completed);
             mELMResponseBuffer = "";
 
             final String part2 = data.substring(m.end());
+
             if (completed && part2.equals("")) {
                 //the data was a clean end to a response (terminator with no trailing data)
                 mBTState = BTState.IDLE;
@@ -835,12 +886,10 @@ public class ServiceMain extends Service {
                 while (!mmCancelling) {
                     if (mBTState != ServiceMain.BTState.IDLE) {
                         //socket is busy with a TX or RX
-                        try {
-                            sleep(ServiceMain.ELM_COMMAND_QUEUE_BUSY_WAIT_TIME);
-                        } catch (InterruptedException ignored) {}
+                        SystemClock.sleep(ServiceMain.ELM_COMMAND_QUEUE_BUSY_WAIT_TIME);
                     } else {
                         command = mmQueue.take();
-                        ServiceMain.this.elmSendCommandNow(command);
+                        ServiceMain.this.elmSendCommand(command);
                     }
                 }
             } catch (Exception e) {

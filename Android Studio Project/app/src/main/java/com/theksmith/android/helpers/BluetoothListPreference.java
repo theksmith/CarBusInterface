@@ -24,6 +24,10 @@ public class BluetoothListPreference extends ListPreference {
     private static final boolean D = BuildConfig.SHOW_DEBUG_LOG_LEVEL > 0;
 
 
+    public BluetoothListPreference(final Context context) {
+        this(context, null);
+    }
+
     public BluetoothListPreference(final Context context, final AttributeSet attrs) {
         super(context, attrs);
 
@@ -51,9 +55,5 @@ public class BluetoothListPreference extends ListPreference {
 
         setEntries(entries);
         setEntryValues(values);
-    }
-
-    public BluetoothListPreference(final Context context) {
-        this(context, null);
     }
 }

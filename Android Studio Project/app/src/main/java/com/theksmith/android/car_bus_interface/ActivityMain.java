@@ -52,18 +52,27 @@ public class ActivityMain extends Activity {
 
             activitySettingsKill();
         } else {
-            //in certain scenarios onCreate() may fire instead of onResume() even though the app is "alive"
-            //if the app really is just launching the global var should be null
+            //in certain scenarios onCreate() may fire instead of onResume() even though the app is actually "alive"
+            //if the app really is just now launching then the global var should be null
             final Boolean isRunning = (Boolean) globals.get(R.string.app_global_b_app_is_running);
             if (isRunning != null && isRunning) {
-                //this is a really "resume" instead of a "launch" so show the settings screen
+                //this is a really "resume" instead of a "launch"...
+
+                //always show the settings screen on resume (user came from the App Switcher or Recent Apps Dialog)
                 activitySettingsShow();
+            } else {
+                //this is a fresh "launch"...
+
+                //clear the debug terminal on each new launch
+                //we use AppState instead of AppGlobals even though we aren't using the info between launches because this data could be too large to always keep in RAM
+                AppState.setString(getApplicationContext(), R.string.app_state_s_termninal_contents, "");
             }
 
+            //start the service (or if this is a "resume" then ensure it's still running)
             serviceMainStart();
         }
 
-        //use the global var to mark the app as "alive"
+        //use a global var to mark the app as "alive"
         globals.set(R.string.app_global_b_app_is_running, true);
 
         //exit this activity
@@ -76,9 +85,10 @@ public class ActivityMain extends Activity {
 
         if (D) Log.d(TAG, "onResume()");
 
+        //always show the settings screen on resume (user came from the App Switcher or Recent Apps Dialog)
         activitySettingsShow();
 
-        //ensure the service is still running
+        //ensure the service is still running in case the system killed it due to low resources
         serviceMainStart();
 
         //exit this activity
@@ -100,7 +110,7 @@ public class ActivityMain extends Activity {
     private void serviceMainStart() {
         if (D) Log.d(TAG, "serviceMainStart()");
 
-        //ensure the service is started (does NOT create duplicate if already running)
+        //ensure the service is started (does not create duplicate if already running)
         startService(new Intent(getBaseContext(), ServiceMain.class));
     }
 

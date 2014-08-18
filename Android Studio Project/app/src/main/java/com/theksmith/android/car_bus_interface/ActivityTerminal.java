@@ -37,6 +37,29 @@ import java.util.Calendar;
 import static com.theksmith.android.car_bus_interface.BusData.*;
 
 
+/*
+todo: refactor to not use the service binding for monitoring bus data...
+
+there are 2 main problems with the current approach:
+
+ -  the terminal only logs when the activity has focus
+
+ -  large/fast data hangs the UI, such as after issuing the ATMA command on a busy bus (the binding is flooded with RX bus data messages)
+
+possible solutions, instead of sending bus data across the binding:
+
+ -  have the service log all bus data to a Shared Preferences item
+    this likely requires a serialized array or collection of some type and all the resultant serialize/de-serialize calls would probably be slow and memory intensive
+    could also run into concurrent access issues with the state item
+
+ -  use Internal Storage or External Storage providers to log all bus data to a file
+    should be fast and easy to write to (append), unsure how easy to reading only the tail is?
+    need to consider whether to use External which will require permissions and more writable/readable checks but allow user to grab the file
+    or for simplicity use Internal since this is supposed to be a SIMPLE debugging feature and not a full app in itself (could always add ability to export the file)
+    if we don't do External, then maybe just use app cache storage for the file (see getCacheDir()), then it gets cleaned up automatically on app uninstall
+
+*/
+
 /**
  * a debugging terminal screen Activity
  * binds to ServiceMain to allow monitoring bus data and sending bus commands
@@ -68,7 +91,9 @@ public class ActivityTerminal extends Activity {
 
     private long mLastTerminalTime;
 
-    private static final int MAX_TERMINAL_LINES = 1000;
+    //todo: temporary debugging, set these back to higher numbers:
+    private static final int MAX_TERMINAL_LINES = 250;
+    private static final int MAX_TERMINAL_LINES_TRIM = 50; //how much space to make each time we reach MAX_TERMINAL_LINES (so that UI doesn't slow down constantly trimming a single line)
 
 
     @Override
@@ -271,7 +296,7 @@ public class ActivityTerminal extends Activity {
             int l = 0;
             for (final String line : splitter) {
                 l++;
-                if (l > (lines - MAX_TERMINAL_LINES)) {
+                if (l > (lines - MAX_TERMINAL_LINES + MAX_TERMINAL_LINES_TRIM)) {
                     trimmed.append(line);
                 }
             }
