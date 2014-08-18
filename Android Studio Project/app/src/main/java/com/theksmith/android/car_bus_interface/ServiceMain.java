@@ -408,6 +408,25 @@ public class ServiceMain extends Service {
         mBTIOThread.write(data);
     }
 
+
+
+    //todo: reminder - currently evaluating this change from elmSendBreak() (which called btWriteData()) to now be btWriteBreak() which skips btWriteData() and the mBTState change...
+    //  if this causes the next command to fail when there is no existing RX, then change it back and add a ELM_COMMAND_TERMINATOR to the command
+    //  but then sometimes there's still not a complete RX according to the current ELM_RESPONSE_SEPARATOR_REGEX, so update that to include "STOPPED\r" or whatever variation comes back in such a case
+    private synchronized void btWriteBreak() {
+        if (D) Log.d(TAG, "btWriteBreak()");
+
+        //we don't use btWriteData() here as we don't want to set mBTState to TX since this special case may never have a corresponding complete RX event to return mBTState to IDLE
+        final String data = String.valueOf((char)0x00);
+        mBTIOThread.write(data.getBytes());
+
+        //give the device time to realize the break before whatever called this method tries to continue
+        SystemClock.sleep(250);
+    }
+
+
+
+
     private void btNotEnabled() {
         if (D) Log.d(TAG, "btNotEnabled()");
 
@@ -738,7 +757,7 @@ public class ServiceMain extends Service {
         }
 
         elmDestroyCommandQueue();
-        elmSendBreak();
+        btWriteBreak();
 
         for (String command : commands) {
             elmQueueCommand(command.trim());
@@ -780,21 +799,11 @@ public class ServiceMain extends Service {
 
         if (mBTState != BTState.IDLE) {
             //we are in the middle of something (like a long RX)
-            elmSendBreak();
+            btWriteBreak();
         }
 
         command += ELM_COMMAND_TERMINATOR;
         btWriteData(command.getBytes());
-    }
-
-    private synchronized void elmSendBreak() {
-        if (D) Log.d(TAG, "elmSendBreak()");
-
-        final String command = String.valueOf((char)0x00);
-        btWriteData(command.getBytes());
-
-        //give the device time to realize the break before whatever called this method tries to continue
-        SystemClock.sleep(250);
     }
 
     private void elmDestroyCommandQueue() {
@@ -820,12 +829,7 @@ public class ServiceMain extends Service {
             //the data contained a separator or terminator
             final String part1 = data.substring(0, m.start());
             mELMResponseBuffer += part1;
-
-
-            //todo: fix this to work when elmSendBreak(); was called - i.e. what comes back then to mark it complete? maybe can just change the ELM_RESPONSE_SEPARATOR_REGEX to include it?
             boolean completed = m.group().contains(ELM_RESPONSE_TERMINATOR);
-
-
             elmParseResponse(mELMResponseBuffer, completed);
             mELMResponseBuffer = "";
 
