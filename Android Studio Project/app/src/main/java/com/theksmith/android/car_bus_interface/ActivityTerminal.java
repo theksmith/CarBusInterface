@@ -324,7 +324,7 @@ public class ActivityTerminal extends Activity {
             message = ">";
             span = new SpannableString(message);
             span.setSpan(Color.WHITE, 0, message.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-            mTxtTerminal.append(message);
+            mTxtTerminal.append(span);
         }
 
         if (mAutoScroll) {

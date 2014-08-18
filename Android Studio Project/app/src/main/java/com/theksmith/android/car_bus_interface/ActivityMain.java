@@ -10,8 +10,8 @@ import com.theksmith.android.helpers.AppState;
 
 
 /**
- * main entry point Activity, has no UI, only starts the background service by default
- * kills background service (exiting app) if called with Intent.ACTION_DELETE
+ * main entry point Activity, has no UI - only starts the background service by default
+ * kills background service (and exits app) if called with Intent.ACTION_DELETE
  * restarts service on Intent.ACTION_REBOOT
  * opens settings screen on Intent.ACTION_EDIT
  *
@@ -101,21 +101,21 @@ public class ActivityMain extends Activity {
         if (D) Log.d(TAG, "serviceMainStart()");
 
         //ensure the service is started (does NOT create duplicate if already running)
-        startService(new Intent(getApplicationContext(), ServiceMain.class));
+        startService(new Intent(getBaseContext(), ServiceMain.class));
     }
 
     private void serviceMainKill() {
         if (D) Log.d(TAG, "serviceMainKill()");
 
         //kill the service
-        stopService(new Intent(getApplicationContext(), ServiceMain.class));
+        stopService(new Intent(getBaseContext(), ServiceMain.class));
     }
 
     private void activitySettingsShow() {
         if (D) Log.d(TAG, "activitySettingsShow()");
 
         //show the settings screen
-        startActivityForResult(new Intent(getApplicationContext(), ActvitySettings.class), ACTIVITY_ID_SETTINGS);
+        startActivityForResult(new Intent(getBaseContext(), ActvitySettings.class), ACTIVITY_ID_SETTINGS);
     }
 
     private void activitySettingsKill() {

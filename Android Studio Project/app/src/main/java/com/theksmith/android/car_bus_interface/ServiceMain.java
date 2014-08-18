@@ -18,6 +18,7 @@ import android.os.IBinder;
 import android.os.Message;
 import android.os.Messenger;
 import android.os.RemoteException;
+import android.os.SystemClock;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
@@ -160,7 +161,10 @@ public class ServiceMain extends Service {
 
         startForeground(PERSISTENT_NOTIFICATION_ID, mNoticeBuilder.build());
 
-        start();
+        //multiple calls to startService() for this service shouldn't actually restart everything if it's already running smoothly
+        if (!isBTConnected()) {
+            start();
+        }
 
         return START_STICKY;
     }
@@ -215,7 +219,7 @@ public class ServiceMain extends Service {
                         if (!isBTConnected()) {
                             BoundNotifyNotReady();
                         } else {
-                            elmSendCommand(message.obj.toString(), true);
+                            elmSendCommandNow(message.obj.toString());
                         }
 
                         break;
@@ -289,10 +293,7 @@ public class ServiceMain extends Service {
             mBusMsgProcessors = null;
         }
 
-        if (mELMCommandQueueThread != null) {
-            mELMCommandQueueThread.cancel();
-            mELMCommandQueueThread = null;
-        }
+        elmDestroyCommandQueue();
 
         if (mBTIOThread != null) {
             mBTIOThread.cancel();
@@ -695,53 +696,68 @@ public class ServiceMain extends Service {
             return;
         }
 
+        elmDestroyCommandQueue();
+        elmSendStopCommandNow();
+
         for (String command : commands) {
-            elmSendCommand(command.trim(), false);
+            elmQueueCommand(command.trim());
         }
     }
 
-    private synchronized void elmSendCommand(String command, final boolean immediate) {
-        if (D) Log.d(TAG, "elmSendCommand() : command= " + command + " immediate= " + immediate);
+    private synchronized void elmQueueCommand(String command) {
+        if (D) Log.d(TAG, "elmQueueCommand() : command= " + command);
 
         if (command == null || command.equals("")) {
             return;
         }
 
-        if (immediate) {
-            //send the command right now
+        if (mELMCommandQueueThread == null) {
+            mELMCommandQueueThread = new ELMCommandQueueThread();
+            mELMCommandQueueThread.start();
+        }
 
-            if (!isBTConnected()) {
-                Log.w(TAG, "elmSendCommand() : failed to send command (bluetooth not connected)");
+        mELMCommandQueueThread.add(command);
+    }
 
-                if (mELMCommandQueueThread != null) {
-                    mELMCommandQueueThread.cancel();
-                    mELMCommandQueueThread = null;
-                }
+    private synchronized void elmSendCommandNow(String command) {
+        if (D) Log.d(TAG, "elmSendCommandNow() : command= " + command);
 
-                btConnectionLost();
-                return;
-            }
+        if (command == null || command.equals("")) {
+            return;
+        }
 
-            //alert any bound clients of this TX
-            BusData data = new BusData(command, BusDataType.TX, false);
-            BoundNotifyBusData(data);
+        if (!isBTConnected()) {
+            Log.w(TAG, "elmSendCommandNow() : failed to send command (bluetooth not connected)");
 
-            if (mBTState != BTState.IDLE) {
-                //if we are in the middle of an RX/TX need to also send an empty command first to abort the current operation
-                command = ELM_COMMAND_TERMINATOR + command;
-            }
+            btConnectionLost();
+            return;
+        }
 
-            command += ELM_COMMAND_TERMINATOR;
-            btWriteData(command.getBytes());
-        } else {
-            //normally we just queue the command
+        //alert any bound clients of this TX
+        BusData data = new BusData(command, BusDataType.TX, false);
+        BoundNotifyBusData(data);
 
-            if (mELMCommandQueueThread == null) {
-                mELMCommandQueueThread = new ELMCommandQueueThread();
-                mELMCommandQueueThread.start();
-            }
+        if (mBTState != BTState.IDLE) {
+            //if we are in the middle of an RX/TX need to also send an empty command first to abort the current operation
+            elmSendStopCommandNow();
 
-            mELMCommandQueueThread.add(command);
+            //give the empty command a few millis to finish
+            SystemClock.sleep(50);
+        }
+
+        command += ELM_COMMAND_TERMINATOR;
+        btWriteData(command.getBytes());
+    }
+
+    private synchronized void elmSendStopCommandNow() {
+        final String command = " " + ELM_COMMAND_TERMINATOR;
+        btWriteData(command.getBytes());
+    }
+
+    private synchronized void elmDestroyCommandQueue() {
+        if (mELMCommandQueueThread != null) {
+            mELMCommandQueueThread.cancel();
+            mELMCommandQueueThread = null;
         }
     }
 
@@ -824,7 +840,7 @@ public class ServiceMain extends Service {
                         } catch (InterruptedException ignored) {}
                     } else {
                         command = mmQueue.take();
-                        ServiceMain.this.elmSendCommand(command, true);
+                        ServiceMain.this.elmSendCommandNow(command);
                     }
                 }
             } catch (Exception e) {
