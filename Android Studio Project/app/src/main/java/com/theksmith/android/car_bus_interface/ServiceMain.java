@@ -408,11 +408,6 @@ public class ServiceMain extends Service {
         mBTIOThread.write(data);
     }
 
-
-
-    //todo: reminder - currently evaluating this change from elmSendBreak() (which called btWriteData()) to now be btWriteBreak() which skips btWriteData() and the mBTState change...
-    //  if this causes the next command to fail when there is no existing RX, then change it back and add a ELM_COMMAND_TERMINATOR to the command
-    //  but then sometimes there's still not a complete RX according to the current ELM_RESPONSE_SEPARATOR_REGEX, so update that to include "STOPPED\r" or whatever variation comes back in such a case
     private synchronized void btWriteBreak() {
         if (D) Log.d(TAG, "btWriteBreak()");
 
@@ -423,9 +418,6 @@ public class ServiceMain extends Service {
         //give the device time to realize the break before whatever called this method tries to continue
         SystemClock.sleep(250);
     }
-
-
-
 
     private void btNotEnabled() {
         if (D) Log.d(TAG, "btNotEnabled()");
@@ -536,16 +528,6 @@ public class ServiceMain extends Service {
                 //we were only doing this in the catch below before the call to btConnectionFailed()
                 SystemClock.sleep(ServiceMain.BT_CONNECTION_RETRY_WAIT);
 
-                //todo: temporary debugging while trying to find an edge case problem...
-                if (mmSocket == null) {
-                    Log.e(TAG, "BTConnectThread.run() : NULL SOCKET!");
-                }
-
-                //todo: temporary debugging while trying to find an edge case problem...
-                if (mmSocket.isConnected()) {
-                    Log.e(TAG, "BTConnectThread.run() : ALREADY CONNECTED!");
-                }
-
                 mmSocket.connect();
 
                 ServiceMain.this.btConnected(mmSocket, mmDevice);
@@ -613,10 +595,9 @@ public class ServiceMain extends Service {
 
             while (!mmCancelling && mmInStream != null) {
                 try {
-                    if (mmInStream.available() > 0) {
-                        length = mmInStream.read(buffer);
-                        ServiceMain.this.btReceivedData(buffer.clone(), length);
-                    }
+                    //note: only performing the read if mmInStream.available() > 0 did NOT work reliably - long running RX operations would start returning 0 constantly after about a minute
+                    length = mmInStream.read(buffer);
+                    ServiceMain.this.btReceivedData(buffer.clone(), length);
                 } catch (Exception e) {
                     Log.w(TAG, "BTIOThread.run() : exception while reading : exception= " + e.getMessage(), e);
 
