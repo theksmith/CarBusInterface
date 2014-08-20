@@ -91,9 +91,8 @@ public class ActivityTerminal extends Activity {
 
     private long mLastTerminalTime;
 
-    //todo: temporary debugging, set these back to higher numbers:
-    private static final int MAX_TERMINAL_LINES = 250;
-    private static final int MAX_TERMINAL_LINES_TRIM = 50; //how much space to make each time we reach MAX_TERMINAL_LINES (so that UI doesn't slow down constantly trimming a single line)
+    private static final int MAX_TERMINAL_LINES = 550;
+    private static final int MAX_TERMINAL_LINES_TRIM = 50; //how much space to make each time we reach MAX_TERMINAL_LINES (trimming a single line at a time would result in constant UI updates)
 
 
     @Override
@@ -287,10 +286,10 @@ public class ActivityTerminal extends Activity {
         //keep a rolling terminal of MAX_TERMINAL_LINES number of lines
         final int lines = mTxtTerminal.getLineCount();
         if (lines > MAX_TERMINAL_LINES) {
-            StringBuilder trimmed = new StringBuilder();
+            final StringBuilder trimmed = new StringBuilder();
             final String html = Html.toHtml(SpannableString.valueOf(mTxtTerminal.getText()));
 
-            TextUtils.SimpleStringSplitter splitter = new TextUtils.SimpleStringSplitter('\n');
+            final TextUtils.SimpleStringSplitter splitter = new TextUtils.SimpleStringSplitter('\n');
             splitter.setString(html);
 
             int l = 0;

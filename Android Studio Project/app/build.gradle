@@ -12,7 +12,7 @@ android {
         minSdkVersion 16
         targetSdkVersion 19
         versionCode 1
-        versionName "0.8.8"
+        versionName "0.8.9"
     }
     buildTypes {
         debug {
@@ -22,7 +22,7 @@ android {
             1 = standard debugging
             2 = detailed/extended debugging
             */
-            buildConfigField "int", "SHOW_DEBUG_LOG_LEVEL", "2"
+            buildConfigField "int", "SHOW_DEBUG_LOG_LEVEL", "1"
         }
         release {
             buildConfigField "int", "SHOW_DEBUG_LOG_LEVEL", "0"

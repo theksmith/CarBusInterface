@@ -1,4 +1,4 @@
-# Version 0.8 (in progress)
+# Version 0.8 (8/19/2014)
 
 +	Re-organized project including a lot of renaming. The package name changed as well users of previous versions will end up with double installs. Simply remove the older version using Settings > Apps.
 +	Added a debug terminal to allow basic interaction with the ELM327 interface device (monitor bus messages, send AT commands). The option is at the bottom of the settings screen.
