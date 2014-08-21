@@ -19,7 +19,7 @@
             android:summary="@string/pref_summary_action_restart" >
             <intent
                 android:action="android.intent.action.REBOOT"
-                android:targetClass="com.theksmith.android.car_bus_interface.ActivityMain"
+                android:targetClass="com.theksmith.android.car_bus_interface.CBIActivityMain"
                 android:targetPackage="com.theksmith.android.car_bus_interface" />
         </Preference>
 
@@ -29,7 +29,7 @@
             android:summary="@string/pref_summary_action_exit" >
             <intent
                 android:action="android.intent.action.DELETE"
-                android:targetClass="com.theksmith.android.car_bus_interface.ActivityMain"
+                android:targetClass="com.theksmith.android.car_bus_interface.CBIActivityMain"
                 android:targetPackage="com.theksmith.android.car_bus_interface" />
         </Preference>
     </PreferenceCategory>
@@ -176,7 +176,7 @@
             android:summary="@string/pref_summary_action_terminal" >
             <intent
                 android:action="android.intent.action.VIEW"
-                android:targetClass="com.theksmith.android.car_bus_interface.ActivityTerminal"
+                android:targetClass="com.theksmith.android.car_bus_interface.CBIActivityTerminal"
                 android:targetPackage="com.theksmith.android.car_bus_interface" />
         </Preference>
     </PreferenceCategory>

@@ -3,6 +3,4 @@
 
     <string name="app_name">Car Bus Interface</string>
 
-    <string name="app_breadcrumb_delimiter">/</string>
-
 </resources>

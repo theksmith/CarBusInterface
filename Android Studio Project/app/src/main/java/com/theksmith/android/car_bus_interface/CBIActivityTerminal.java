@@ -62,13 +62,13 @@ possible solutions, instead of sending bus data across the binding:
 
 /**
  * a debugging terminal screen Activity
- * binds to ServiceMain to allow monitoring bus data and sending bus commands
+ * binds to CBIServiceMain to allow monitoring bus data and sending bus commands
  * this is launched from within the Settings screen
  *
  * @author Kristoffer Smith <kristoffer@theksmith.com>
  */
-public class ActivityTerminal extends Activity {
-    private static final String TAG = "ActivityTerminal";
+public class CBIActivityTerminal extends Activity {
+    private static final String TAG = "CBIActivityTerminal";
     private static final boolean D = BuildConfig.SHOW_DEBUG_LOG_LEVEL > 0;
     private static final boolean DD = BuildConfig.SHOW_DEBUG_LOG_LEVEL > 1;
 
@@ -102,8 +102,6 @@ public class ActivityTerminal extends Activity {
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.activity_terminal);
-
-        setTitle(getString(R.string.app_name) + " " + BuildConfig.VERSION_NAME + " " + getString(R.string.app_breadcrumb_delimiter) + " " + getTitle());
 
         mTxtTerminal = (TextView) findViewById(R.id.txtTerminal);
         mTxtTerminal.setOnTouchListener(mTxtTerminal_OnTouchListener);
@@ -378,7 +376,7 @@ public class ActivityTerminal extends Activity {
     void serviceMainBind() {
         if (D) Log.d(TAG, "serviceMainBind()");
 
-        bindService(new Intent(ActivityTerminal.this, ServiceMain.class), mServiceMainConnection, Context.BIND_AUTO_CREATE);
+        bindService(new Intent(CBIActivityTerminal.this, CBIServiceMain.class), mServiceMainConnection, Context.BIND_AUTO_CREATE);
         mIsBound = true;
     }
 
@@ -388,7 +386,7 @@ public class ActivityTerminal extends Activity {
         if (mIsBound) {
             if (mServiceMainMessenger != null) {
                 try {
-                    Message message = Message.obtain(null, ServiceMain.BOUND_MSG_UNREGISTER_CLIENT);
+                    Message message = Message.obtain(null, CBIServiceMain.BOUND_MSG_UNREGISTER_CLIENT);
                     message.replyTo = mServiceMainIncomingMessenger;
                     mServiceMainMessenger.send(message);
                 } catch (RemoteException ignored) {}
@@ -406,7 +404,7 @@ public class ActivityTerminal extends Activity {
             mServiceMainMessenger = new Messenger(service);
 
             try {
-                Message message = Message.obtain(null, ServiceMain.BOUND_MSG_REGISTER_CLIENT);
+                Message message = Message.obtain(null, CBIServiceMain.BOUND_MSG_REGISTER_CLIENT);
                 message.replyTo = mServiceMainIncomingMessenger;
                 mServiceMainMessenger.send(message);
             } catch (RemoteException e) {
@@ -427,7 +425,7 @@ public class ActivityTerminal extends Activity {
             if (DD) Log.d(TAG, "ServiceMainHandler : handleMessage()");
 
             switch (message.what) {
-                case ServiceMain.BOUND_MSG_NOTIFY_BUS_DATA:
+                case CBIServiceMain.BOUND_MSG_NOTIFY_BUS_DATA:
                     if (message.obj != null) {
                         BusData data = (BusData) message.obj;
                         terminalAppend(data);
@@ -444,7 +442,7 @@ public class ActivityTerminal extends Activity {
         if (D) Log.d(TAG, "serviceMainSendBusCommand()");
 
         try {
-            Message message = Message.obtain(null, ServiceMain.BOUND_MSG_SEND_BUS_COMMAND, command);
+            Message message = Message.obtain(null, CBIServiceMain.BOUND_MSG_SEND_BUS_COMMAND, command);
             message.replyTo = mServiceMainIncomingMessenger;
             mServiceMainMessenger.send(message);
         } catch (RemoteException e) {
@@ -456,7 +454,7 @@ public class ActivityTerminal extends Activity {
         if (D) Log.d(TAG, "serviceMainSendStartupCommands()");
 
         try {
-            Message message = Message.obtain(null, ServiceMain.BOUND_MSG_SEND_STARTUP_COMMANDS);
+            Message message = Message.obtain(null, CBIServiceMain.BOUND_MSG_SEND_STARTUP_COMMANDS);
             message.replyTo = mServiceMainIncomingMessenger;
             mServiceMainMessenger.send(message);
         } catch (RemoteException e) {

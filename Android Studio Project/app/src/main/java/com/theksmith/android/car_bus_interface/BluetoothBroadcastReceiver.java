@@ -37,7 +37,7 @@ public class BluetoothBroadcastReceiver extends BroadcastReceiver {
 
                 if (D) Log.d(TAG, "onReceive() : state= " + state);
 
-                final Intent i = new Intent(context, ServiceMain.class);
+                final Intent i = new Intent(context, CBIServiceMain.class);
 
                 if (state == BluetoothAdapter.STATE_ON) {
                     context.stopService(i);

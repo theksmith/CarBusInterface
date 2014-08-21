@@ -10,12 +10,12 @@ import android.util.Log;
 
 /**
  * a Settings screen PreferenceActivity, the app's primary UI
- * this is shown when user taps on the persistent notification created by ServiceMain
+ * this is shown when user taps on the persistent notification created by CBIServiceMain
  *
  * @author Kristoffer Smith <kristoffer@theksmith.com>
  */
-public class ActvitySettings extends PreferenceActivity {
-    private static final String TAG = "ActvitySettings";
+public class CBIActvitySettings extends PreferenceActivity {
+    private static final String TAG = "CBIActvitySettings";
     private static final boolean D = BuildConfig.SHOW_DEBUG_LOG_LEVEL > 0;
 
 
@@ -30,7 +30,7 @@ public class ActvitySettings extends PreferenceActivity {
 
         super.onCreate(savedInstanceState);
 
-        setTitle(getString(R.string.app_name) + " " + BuildConfig.VERSION_NAME + " " + getString(R.string.app_breadcrumb_delimiter) + " " + getTitle());
+        setTitle(getString(R.string.app_name) + " " + BuildConfig.VERSION_NAME);
     }
 
     @Override

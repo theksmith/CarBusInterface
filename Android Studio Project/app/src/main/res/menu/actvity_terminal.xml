@@ -1,6 +1,6 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    tools:context="com.theksmith.android.car_bus_interface.ActivityTerminal" >
+    tools:context="com.theksmith.android.car_bus_interface.CBIActivityTerminal" >
 
     <item android:id="@+id/action_scroll"
         android:title="@string/action_scroll"

@@ -1,4 +1,4 @@
-# Version 0.8 (8/19/2014)
+# Version 0.8 (8/21/2014)
 
 +	Re-organized project including a lot of renaming. The package name changed as well users of previous versions will end up with double installs. Simply remove the older version using Settings > Apps.
 +	Added a debug terminal to allow basic interaction with the ELM327 interface device (monitor bus messages, send AT commands). The option is at the bottom of the settings screen.
@@ -6,7 +6,7 @@
 +	Fixed threading bugs that prevented correct application flow or caused hanging in some cases. 
 +	Other minor bug fixes and general refactoring to improve code quality.
 +	KNOWN ISSUE: Within the debug terminal, issuing commands that result in a large flood of messages cause the UI to become unresponsive (such as "ATMA" on a very active bus).
-+	KNOWN ISSUE: Occasionally the app will indicate that it is connected though in reality there is no communication with the ELM327 interface. This seems to only occur on Android 4.1 systems. Turning bluetooth OFF then back ON resolves the issue.
++	KNOWN ISSUE: Occasionally the app will indicate that it is connected though in reality there is no communication with the ELM327 interface. This seems to only occur on Android 4.1 systems. Turning bluetooth completely OFF then back ON resolves the issue.
 
 
 # Version 0.7 (8/12/2014)

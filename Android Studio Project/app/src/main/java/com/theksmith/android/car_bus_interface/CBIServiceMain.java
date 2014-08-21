@@ -51,8 +51,8 @@ todo: improve handling of potential error conditions...
  *
  * @author Kristoffer Smith <kristoffer@theksmith.com>
  */
-public class ServiceMain extends Service {
-    private static final String TAG = "ServiceMain";
+public class CBIServiceMain extends Service {
+    private static final String TAG = "CBIServiceMain";
     private static final boolean D = BuildConfig.SHOW_DEBUG_LOG_LEVEL > 0;
     private static final boolean DD = BuildConfig.SHOW_DEBUG_LOG_LEVEL > 1;
 
@@ -103,8 +103,8 @@ public class ServiceMain extends Service {
     private HashMap<String, BusMessageProcessor> mBusMsgProcessors;
 
 
-    public ServiceMain() {
-        if (D) Log.d(TAG, "ServiceMain()");
+    public CBIServiceMain() {
+        if (D) Log.d(TAG, "CBIServiceMain()");
 
         mNoticeBuilder = new Notification.Builder(this);
 
@@ -126,10 +126,10 @@ public class ServiceMain extends Service {
 
         //setup the persistent notification as required for any service that returns START_STICKY
 
-        final Intent intent = new Intent(this, ActivityMain.class);
+        final Intent intent = new Intent(this, CBIActivityMain.class);
         intent.setAction(Intent.ACTION_EDIT);
         final TaskStackBuilder stack = TaskStackBuilder.create(this);
-        stack.addParentStack(ActivityMain.class);
+        stack.addParentStack(CBIActivityMain.class);
         stack.addNextIntent(intent);
         PendingIntent resultPendingIntent = stack.getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);
 
@@ -216,7 +216,7 @@ public class ServiceMain extends Service {
         public void handleMessage(Message message) {
             if (D) Log.d(TAG, "BoundIncomingHandler : handleMessage() : msg.what= " + message.what);
 
-            synchronized (ServiceMain.this) {
+            synchronized (CBIServiceMain.this) {
                 switch (message.what) {
                     case BOUND_MSG_REGISTER_CLIENT:
                         mBoundClients.add(message.replyTo);
@@ -463,7 +463,7 @@ public class ServiceMain extends Service {
                 if (state == BluetoothAdapter.STATE_OFF || state == BluetoothAdapter.STATE_TURNING_OFF) {
                     btNotEnabled();
                 } else if (state == BluetoothAdapter.STATE_ON) {
-                    ServiceMain.this.start();
+                    CBIServiceMain.this.start();
                 }
             }
         }
@@ -526,11 +526,11 @@ public class ServiceMain extends Service {
             try {
                 //doing this BEFORE the connect attempt should ensure that regardless of how we got here we don't try to re-connect too fast which can give the exception "RFCOMM_CreateConnection - already opened state:2, RFC state:4, MCB state:5"
                 //we were only doing this in the catch below before the call to btConnectionFailed()
-                SystemClock.sleep(ServiceMain.BT_CONNECTION_RETRY_WAIT);
+                SystemClock.sleep(CBIServiceMain.BT_CONNECTION_RETRY_WAIT);
 
                 mmSocket.connect();
 
-                ServiceMain.this.btConnected(mmSocket, mmDevice);
+                CBIServiceMain.this.btConnected(mmSocket, mmDevice);
             } catch (Exception e) {
                 Log.w(TAG, "BTConnectThread.run() : failed to connect : exception= " + e.getMessage(), e);
 
@@ -542,7 +542,7 @@ public class ServiceMain extends Service {
                     }
                 }
 
-                ServiceMain.this.btConnectionFailed();
+                CBIServiceMain.this.btConnectionFailed();
             }
         }
 
@@ -597,11 +597,11 @@ public class ServiceMain extends Service {
                 try {
                     //note: only performing the read if mmInStream.available() > 0 did NOT work reliably - long running RX operations would start returning 0 constantly after about a minute
                     length = mmInStream.read(buffer);
-                    ServiceMain.this.btReceivedData(buffer.clone(), length);
+                    CBIServiceMain.this.btReceivedData(buffer.clone(), length);
                 } catch (Exception e) {
                     Log.w(TAG, "BTIOThread.run() : exception while reading : exception= " + e.getMessage(), e);
 
-                    ServiceMain.this.btConnectionLost();
+                    CBIServiceMain.this.btConnectionLost();
                     return;
                 }
             }
@@ -609,7 +609,7 @@ public class ServiceMain extends Service {
             if (!mmCancelling) {
                 Log.w(TAG, "BTIOThread.run() : lost input stream");
 
-                ServiceMain.this.btConnectionLost();
+                CBIServiceMain.this.btConnectionLost();
             }
         }
 
@@ -869,12 +869,12 @@ public class ServiceMain extends Service {
             try {
                 String command;
                 while (!mmCancelling) {
-                    if (mBTState != ServiceMain.BTState.IDLE) {
+                    if (mBTState != CBIServiceMain.BTState.IDLE) {
                         //socket is busy with a TX or RX
-                        SystemClock.sleep(ServiceMain.ELM_COMMAND_QUEUE_BUSY_WAIT_TIME);
+                        SystemClock.sleep(CBIServiceMain.ELM_COMMAND_QUEUE_BUSY_WAIT_TIME);
                     } else {
                         command = mmQueue.take();
-                        ServiceMain.this.elmSendCommand(command);
+                        CBIServiceMain.this.elmSendCommand(command);
                     }
                 }
             } catch (Exception e) {

@@ -17,8 +17,8 @@ import com.theksmith.android.helpers.AppState;
  *
  * @author Kristoffer Smith <kristoffer@theksmith.com>
  */
-public class ActivityMain extends Activity {
-    private static final String TAG = "ActivityMain";
+public class CBIActivityMain extends Activity {
+    private static final String TAG = "CBIActivityMain";
     private static final boolean D = BuildConfig.SHOW_DEBUG_LOG_LEVEL > 0;
 
     private static final int ACTIVITY_ID_SETTINGS = 1;
@@ -111,21 +111,21 @@ public class ActivityMain extends Activity {
         if (D) Log.d(TAG, "serviceMainStart()");
 
         //ensure the service is started (does not create duplicate if already running)
-        startService(new Intent(getBaseContext(), ServiceMain.class));
+        startService(new Intent(getBaseContext(), CBIServiceMain.class));
     }
 
     private void serviceMainKill() {
         if (D) Log.d(TAG, "serviceMainKill()");
 
         //kill the service
-        stopService(new Intent(getBaseContext(), ServiceMain.class));
+        stopService(new Intent(getBaseContext(), CBIServiceMain.class));
     }
 
     private void activitySettingsShow() {
         if (D) Log.d(TAG, "activitySettingsShow()");
 
         //show the settings screen
-        startActivityForResult(new Intent(getBaseContext(), ActvitySettings.class), ACTIVITY_ID_SETTINGS);
+        startActivityForResult(new Intent(getBaseContext(), CBIActvitySettings.class), ACTIVITY_ID_SETTINGS);
     }
 
     private void activitySettingsKill() {

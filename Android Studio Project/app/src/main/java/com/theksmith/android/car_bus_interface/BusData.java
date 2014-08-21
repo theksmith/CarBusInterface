@@ -4,7 +4,7 @@ import android.util.Log;
 
 
 /**
- * helper class to represent bus data within messages passed between ServiceMain and bound clients
+ * helper class to represent bus data within messages passed between CBIServiceMain and bound clients
  *
  * @author Kristoffer Smith <kristoffer@theksmith.com>
  */
