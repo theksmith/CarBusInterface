@@ -52,7 +52,7 @@
 
         <EditTextPreference
             android:key="elm_commands"
-            android:defaultValue="ATL1; ATE0; ATS1; ATH1; ATSP2; ATMR11;"
+            android:defaultValue="ATWS; ATL0; ATE0; ATS1; ATH1; ATSP2; ATMR11;"
             android:title="@string/pref_title_elm_commands"
             android:dialogMessage="@string/pref_message_elm_commands"
             android:selectAllOnFocus="false"
