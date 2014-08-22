@@ -1,4 +1,4 @@
-I'd love to hear if you find this project useful in any way. Please send a quick note to kristoffer@theksmith.com or [@theksmithphx](https://twitter.com/theksmithphx)!
+I'd love to hear if you find this project useful in any way. Please send a quick note to kristoffer@theksmith.com or tweet [@theksmithphx](https://twitter.com/theksmithphx)!
 
 
 # Car Bus Interface
