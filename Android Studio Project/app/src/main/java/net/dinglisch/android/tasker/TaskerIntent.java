@@ -1,6 +1,5 @@
-/**
- * SOURCED DIRECTLY FROM: http://tasker.dinglisch.net/code/TaskerIntent.java
- */
+// SOURCED DIRECTLY FROM: http://tasker.dinglisch.net/code/TaskerIntent.java
+
 
 // Version 1.3.3
 
