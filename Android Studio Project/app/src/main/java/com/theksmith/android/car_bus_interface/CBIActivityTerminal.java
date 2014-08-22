@@ -143,8 +143,12 @@ public class CBIActivityTerminal extends Activity {
         super.onResume();
 
         //persist terminal contents
-        String text = AppState.getString(getApplicationContext(), R.string.app_state_s_termninal_contents, "");
-        mTxtTerminal.setText(Html.fromHtml(text));
+        String html = AppState.getString(getApplicationContext(), R.string.app_state_s_termninal_contents, "");
+        mTxtTerminal.setText(Html.fromHtml(html));
+
+        //alert users that terminal is once again active
+        BusData data = new BusData(getString(R.string.msg_error_terminal_focus_resumed), BusDataType.ERROR, false);
+        terminalAppend(data);
     }
 
     @Override
@@ -152,6 +156,10 @@ public class CBIActivityTerminal extends Activity {
         if (D) Log.d(TAG, "onPause()");
 
         super.onPause();
+
+        //alert users that terminal was not logging while out of focus
+        BusData data = new BusData(getString(R.string.msg_error_terminal_focus_lost), BusDataType.ERROR, false);
+        terminalAppend(data);
 
         //persist terminal contents
         SpannableString span = SpannableString.valueOf(mTxtTerminal.getText());
