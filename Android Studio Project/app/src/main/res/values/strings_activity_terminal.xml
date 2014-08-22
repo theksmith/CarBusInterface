@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="title_activity_terminal">Debug Terminal</string>
+
+    <string name="action_scroll">Auto Scroll</string>
+    <string name="action_show_time">Show Time</string>
+    <string name="action_show_elapsed">Show Elapsed</string>
+    <string name="action_send_startup">Re-send startup commands</string>
+
+    <string name="btn_send_text">Send</string>
+    <string name="txt_command_text">Enter AT command…</string>
+
+    <string name="msg_alert_scroll_off">Auto Scroll OFF</string>
+    <string name="msg_error_terminal_lost_binding">Lost communication, ensure the app is still running</string>
+    <string name="msg_error_terminal_focus_lost">Pausing Terminal</string>
+    <string name="msg_error_terminal_focus_resumed">Resuming Terminal</string>
+
+</resources>

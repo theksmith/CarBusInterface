@@ -8,18 +8,24 @@ android {
     compileSdkVersion 19
     buildToolsVersion '20.0.0'
     defaultConfig {
-        applicationId "com.theksmith.car_bus_interface"
+        applicationId "com.theksmith.android.car_bus_interface"
         minSdkVersion 16
         targetSdkVersion 19
         versionCode 1
-        versionName "0.7"
+        versionName "0.8"
     }
     buildTypes {
         debug {
-            buildConfigField "boolean", "SHOW_DEBUG_LOG", "true"
+            /*
+            SHOW_DEBUG_LOG_LEVEL:
+            0 = no debugging to logcat
+            1 = standard debugging
+            2 = detailed/extended debugging
+            */
+            buildConfigField "int", "SHOW_DEBUG_LOG_LEVEL", "1"
         }
         release {
-            buildConfigField "boolean", "SHOW_DEBUG_LOG", "false"
+            buildConfigField "int", "SHOW_DEBUG_LOG_LEVEL", "0"
 
             runProguard false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'

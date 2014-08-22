@@ -1,35 +1,37 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
+    <string name="title_activity_settings">Settings</string>
+
     <string name="category_actions_title">Options</string>
 
     <string name="pref_title_action_help">Help</string>
-    <string name="pref_summary_action_help">Tap here to open a web page with info about this app and instructions on how to use it</string>
+    <string name="pref_summary_action_help">Opens a web page with info about the app and instructions on how to use it</string>
 
     <string name="pref_title_action_restart">Apply Changes &amp; Restart App</string>
-    <string name="pref_summary_action_restart">Tap here to restart the app after making settings changes</string>
+    <string name="pref_summary_action_restart">Restarts the app to apply settings changes</string>
 
     <string name="pref_title_action_exit">Stop &amp; Exit</string>
-    <string name="pref_summary_action_exit">Tap here to stop monitoring and exit the app</string>
+    <string name="pref_summary_action_exit">Stops monitoring and exits the app</string>
 
     <string name="category_general_title">General Settings</string>
 
     <string name="pref_title_auto_launch">Automatic Launch</string>
     <string name="pref_summary_auto_launch">Automatically launch/close app when bluetooth is enabled/disabled</string>
 
-    <string name="pref_title_bluetooth_mac">ODB2 Interface Device</string>
+    <string name="pref_title_bluetooth_mac">ELM327 Interface Device</string>
 
-    <string name="pref_title_elm_commands">OBD2 Interface Startup Commands</string>
+    <string name="pref_title_elm_commands">Interface Startup Commands</string>
     <string name="pref_message_elm_commands">
-        End each command with a semicolon. Always begin with the commands ATL1; ATE0; and then include your own initialization and monitoring commands.
-        \n\nEXAMPLE: ATL1; ATE0; ATS1; ATH1; ATSP2; ATMR11;
+        End each command with a semicolon. It is recommended to always begin with the commands ATWS; ATL0; ATE0; and then include your own initialization and monitoring commands.
+        \n\nEXAMPLE: ATWS; ATL0; ATE0; ATS1; ATH1; ATSP2; ATMR11;
     </string>
 
-    <string name="category_monitors_title">Car Interface Monitors</string>
+    <string name="category_monitors_title">Interface Monitors</string>
 
     <string name="pref_message_elm_monitors">
-        Enter the vehicle bus message to monitor for and the desired responses.
-        \n\nFORMAT: Message Text | Silence Errors | Bounce Group Time | Short Group Time | Long Group Time | Long Group Watch Time | Short Group Action | Long Group Action
+        Enter the vehicle bus data to monitor for and the desired responses.
+        \n\nFORMAT: Bus Data | Silence Errors | Bounce Group Time | Short Group Time | Long Group Time | Long Group Watch Time | Short Group Action | Long Group Action
         \n\nEXAMPLE: 3D 11 00 02 D4 | false | 120 | 30 | 100 | 300 | *BUTTON_ROOT=KEYCODE_HOME | *BUTTON_ROOT=KEYCODE_APP_SWITCH
     </string>
 
@@ -43,5 +45,10 @@
     <string name="pref_title_elm_monitor8">Monitor 8 Config</string>
     <string name="pref_title_elm_monitor9">Monitor 9 Config</string>
     <string name="pref_title_elm_monitor10">Monitor 10 Config</string>
+
+    <string name="category_advanced_title">Advanced</string>
+
+    <string name="pref_title_action_terminal">Debug Terminal</string>
+    <string name="pref_summary_action_terminal">Allows direct interaction with the interface device</string>
 
 </resources>

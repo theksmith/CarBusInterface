@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_state_b_first_run_completed">app_state_b_first_run_completed</string>
+    <string name="app_state_s_termninal_contents">app_state_s_termninal_contents</string>
+
+</resources>

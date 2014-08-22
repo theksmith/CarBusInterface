@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="msg_error_attempting_action">Error while attempting action</string>
+
+</resources>

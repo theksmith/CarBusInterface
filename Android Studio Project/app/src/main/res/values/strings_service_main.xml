@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="msg_starting">Starting…</string>
+    <string name="msg_stopped">Stopped</string>
+    <string name="msg_connecting">Connecting to</string>
+    <string name="msg_connected">Connected to</string>
+    <string name="msg_bt_not_enabled">Bluetooth not enabled</string>
+    <string name="msg_bt_not_paired">Interface device not paired…</string>
+    <string name="msg_bt_not_configured">No interface device chosen…</string>
+    <string name="msg_bus_monitors_not_configured">Invalid/missing interface monitor configs…</string>
+    <string name="msg_bus_commands_not_configured">Invalid/missing interface startup commands…</string>
+
+    <string name="msg_error_bound_error_prefix">Error!</string>
+
+</resources>

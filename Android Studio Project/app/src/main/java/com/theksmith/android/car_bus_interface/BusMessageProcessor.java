@@ -1,4 +1,4 @@
-package com.theksmith.car_bus_interface;
+package com.theksmith.android.car_bus_interface;
 
 import android.content.Context;
 import android.net.Uri;
@@ -14,18 +14,19 @@ import java.util.Arrays;
 
 
 /**
- * a Thread class for logging occurrences of a particular bus msg and responding to it
+ * a Thread class for logging occurrences of a particular bus msg and responding to them intelligently
  * this is only needed if you have repeating bus messages and want to ignore possible bounces or identify a long versus short group of repeats (such as for a button press)
  *
  * @author Kristoffer Smith <kristoffer@theksmith.com>
  */
 public class BusMessageProcessor extends Thread {
     private static final String TAG = "BusMessageProcessor";
-    private static final boolean D = BuildConfig.SHOW_DEBUG_LOG;
+    private static final boolean D = BuildConfig.SHOW_DEBUG_LOG_LEVEL > 0;
+    private static final boolean DD = BuildConfig.SHOW_DEBUG_LOG_LEVEL > 1;
 
     private volatile boolean mCancelling;
 
-    private final Context mContext;
+    private final Context mAppContext;
 
     private final String mMessage;
     private volatile ArrayList<MessageEvent> mEvents;
@@ -64,15 +65,15 @@ public class BusMessageProcessor extends Thread {
     }
 
     private class MessageEvent {
-        public long time;
-        public EventType type;
-        public boolean shouldActOn;
-        public boolean didActOn;
+        public long time = 0;
+        public EventType type = EventType.UNKNOWN;
+        public boolean shouldActOn = false;
+        public boolean didActOn = false;
     }
 
 
-    public BusMessageProcessor(final Context context, final String message, final boolean silenceErrors, final long timeToIgnoreRepeatsAfterAction, final long minTimeToGroupRepeatsAsShort, final long minTimeToGroupRepeatsAsLong, final long maxTimeToWatchForLong, final String actionForShortOrAll, final String actionForLong) throws IllegalArgumentException {
-        if (D) Log.d(TAG, "BusMessageProcessor() : message= " + message);
+    public BusMessageProcessor(final Context appContext, final String message, final boolean silenceErrors, final long timeToIgnoreRepeatsAfterAction, final long minTimeToGroupRepeatsAsShort, final long minTimeToGroupRepeatsAsLong, final long maxTimeToWatchForLong, final String actionForShortOrAll, final String actionForLong) throws IllegalArgumentException {
+        if (D) Log.d(TAG, "BusMessageProcessor() : data= " + message);
 
         if (timeToIgnoreRepeatsAfterAction > 0 && timeToIgnoreRepeatsAfterAction <= PROCESSOR_TICK_TIME) {
             throw new IllegalArgumentException("BusMessageProcessor() : timeToIgnoreRepeatsAfterAction > 0 but < PROCESSOR_TICK_TIME (" + PROCESSOR_TICK_TIME + ")");
@@ -86,7 +87,7 @@ public class BusMessageProcessor extends Thread {
             throw new IllegalArgumentException("BusMessageProcessor() : minTimeToGroupRepeatsAsLong > 0 but < PROCESSOR_TICK_TIME (" + PROCESSOR_TICK_TIME + ")");
         }
 
-        mContext = context;
+        mAppContext = appContext;
 
         mMessage = message;
 
@@ -107,7 +108,7 @@ public class BusMessageProcessor extends Thread {
         mActionForShort = actionForShortOrAll;
         mActionForLong = actionForLong;
 
-        mActionsHelper = AndroidActions.getInstance(mContext, mSilenceErrors);
+        mActionsHelper = AndroidActions.getInstance(mAppContext, mSilenceErrors);
 
         //initialize the event log
         initLog();
@@ -191,7 +192,7 @@ public class BusMessageProcessor extends Thread {
     private synchronized Integer analyzeLatestEvent() {
         if (mCancelling || mEvents == null || mEvents.size() <= 0) {
             //cancelling or for some reason we have no events
-            if (D) Log.d(TAG, "analyzeLatestEvent() : exit path A");
+            if (DD) Log.d(TAG, "analyzeLatestEvent() : exit path A");
             return null;
         }
 
@@ -203,13 +204,13 @@ public class BusMessageProcessor extends Thread {
 
             if (latestEvent.type != EventType.UNKNOWN) {
                 //already analyzed this event to a positive conclusion, just return it's index
-                if (D) Log.d(TAG, "analyzeLatestEvent() : exit path B");
+                if (DD) Log.d(TAG, "analyzeLatestEvent() : exit path B");
                 return latestIndex;
             }
 
             if (mRespondToEveryEvent) {
                 //responding to every event, no need for logic, mark it a SHORT
-                if (D) Log.d(TAG, "analyzeLatestEvent() : logic path 1");
+                if (DD) Log.d(TAG, "analyzeLatestEvent() : logic path 1");
                 latestEvent.type = EventType.SHORT;
             } else {
                 //gather info needed for main analysis logic
@@ -247,13 +248,13 @@ public class BusMessageProcessor extends Thread {
                     }
                 }
 
-                //if (D) Log.d(TAG, "analyzeLatestEvent() : spanNowToLatestActedUpon=" + spanNowToLatestActedUpon + " - countUnknownsSinceLatestActedUpon=" + countUnknownsSinceLatestActedUpon + " - spanNowToFirstUnknownSinceLatestActedUpon=" + spanNowToFirstUnknownSinceLatestActedUpon + " - spanMaxBetweenUnknownsSinceLatestActedUpon=" + spanMaxBetweenUnknownsSinceLatestActedUpon);
+                //if (DD) Log.d(TAG, "analyzeLatestEvent() : spanNowToLatestActedUpon=" + spanNowToLatestActedUpon + " - countUnknownsSinceLatestActedUpon=" + countUnknownsSinceLatestActedUpon + " - spanNowToFirstUnknownSinceLatestActedUpon=" + spanNowToFirstUnknownSinceLatestActedUpon + " - spanMaxBetweenUnknownsSinceLatestActedUpon=" + spanMaxBetweenUnknownsSinceLatestActedUpon);
 
                 //begin main analysis logic
 
                 if (mTimeToIgnoreAfterAction > 0 && spanNowToLatestActedUpon <= mTimeToIgnoreAfterAction) {
                     //this is an ignore period and we are still within that period, mark it to IGNORE
-                    if (D) Log.d(TAG, "analyzeLatestEvent() : logic path 2");
+                    if (DD) Log.d(TAG, "analyzeLatestEvent() : logic path 2");
                     latestEvent.type = EventType.IGNORED;
                 } else {
                     //the possibility of an IGNORE has been eliminated
@@ -273,23 +274,23 @@ public class BusMessageProcessor extends Thread {
 
                                     if (spanMaxBetweenUnknownsSinceLatestActedUpon >= mMinTimeToGroupAsLong) {
                                         //the distance between the multiple UNKNOWN meets the LONG requirement
-                                        if (D) Log.d(TAG, "analyzeLatestEvent() : logic path 3");
+                                        if (DD) Log.d(TAG, "analyzeLatestEvent() : logic path 3");
                                         latestEvent.type = EventType.LONG;
                                     } else {
                                         //the distance between the multiple UNKNOWN did not meet the LONG requirement
                                         //due to timeout it has to be a SHORT (it may or may not have met the SHORT requirement though)
-                                        if (D) Log.d(TAG, "analyzeLatestEvent() : logic path 4");
+                                        if (DD) Log.d(TAG, "analyzeLatestEvent() : logic path 4");
                                         latestEvent.type = EventType.SHORT;
                                     }
                                 } else {
                                     //there was one or less UNKNOWN so it can't meet the LONG requirement
                                     //due to timeout it has to be a SHORT
-                                    if (D) Log.d(TAG, "analyzeLatestEvent() : logic path 5");
+                                    if (DD) Log.d(TAG, "analyzeLatestEvent() : logic path 5");
                                     latestEvent.type = EventType.SHORT;
                                 }
                             } else {
                                 //keep watching for the LONG or SHORT
-                                if (D) Log.d(TAG, "analyzeLatestEvent() : logic path 6");
+                                if (DD) Log.d(TAG, "analyzeLatestEvent() : logic path 6");
                                 latestEvent.type = EventType.UNKNOWN;
                             }
                         } else {
@@ -299,11 +300,11 @@ public class BusMessageProcessor extends Thread {
                             if (spanNowToFirstUnknownSinceLatestActedUpon >= mMinTimeToGroupAsLong && countUnknownsSinceLatestActedUpon > 0) {
                                 //the LONG time was met and there was at least one UNKNOWN that could have been the LONG
                                 //we didn't need to wait till the max LONG watch time since we were only watching for LONG
-                                if (D) Log.d(TAG, "analyzeLatestEvent() : logic path 7");
+                                if (DD) Log.d(TAG, "analyzeLatestEvent() : logic path 7");
                                 latestEvent.type = EventType.LONG;
                             } else {
                                 //keep watching for the LONG
-                                if (D) Log.d(TAG, "analyzeLatestEvent() : logic path 8");
+                                if (DD) Log.d(TAG, "analyzeLatestEvent() : logic path 8");
                                 latestEvent.type = EventType.UNKNOWN;
                             }
                         }
@@ -314,11 +315,11 @@ public class BusMessageProcessor extends Thread {
                         if (spanNowToFirstUnknownSinceLatestActedUpon >= mMinTimeToGroupAsShort && countUnknownsSinceLatestActedUpon > 0) {
                             //the SHORT time was met and there was at least one UNKNOWN that could have been the SHORT
                             //we didn't need to wait till the max SHORT watch time since we were only watching for SHORT
-                            if (D) Log.d(TAG, "analyzeLatestEvent() : logic path 9");
+                            if (DD) Log.d(TAG, "analyzeLatestEvent() : logic path 9");
                             latestEvent.type = EventType.SHORT;
                         } else {
                             //keep watching for the SHORT
-                            if (D) Log.d(TAG, "analyzeLatestEvent() : logic path 10");
+                            if (DD) Log.d(TAG, "analyzeLatestEvent() : logic path 10");
                             latestEvent.type = EventType.UNKNOWN;
                         }
                     }
@@ -333,7 +334,7 @@ public class BusMessageProcessor extends Thread {
             //update the event's info in the log
             mEvents.set(latestIndex, latestEvent);
 
-            if (D) Log.d(TAG, "analyzeLatestEvent() : exit path C");
+            if (DD) Log.d(TAG, "analyzeLatestEvent() : exit path C");
             return latestIndex;
         } catch (Exception e) {
             Log.e(TAG, "analyzeLatestEvent() : unexpected exception : exception= " + e.getMessage(), e);
@@ -398,8 +399,8 @@ public class BusMessageProcessor extends Thread {
                     @Override
                     public void run() {
                         try {
-                            final String text = mContext.getApplicationInfo().name + ": " + mContext.getResources().getString(R.string.msg_app_error_attempting_action) + " " + action;
-                            Toast.makeText(mContext, text, Toast.LENGTH_SHORT).show();
+                            final String text = mAppContext.getApplicationInfo().name + ": " + mAppContext.getString(R.string.msg_error_attempting_action) + " " + action;
+                            Toast.makeText(mAppContext, text, Toast.LENGTH_SHORT).show();
                         } catch (Exception ignored) {}
                     }
                 });
@@ -417,7 +418,7 @@ public class BusMessageProcessor extends Thread {
                     if (latestIndex != null) {
                         final MessageEvent latestEvent = BusMessageProcessor.this.mEvents.get(latestIndex);
 
-                        if (D) Log.d(TAG, "mProcessor.run() : latestEvent.time= " + latestEvent.time + " latestEvent.type= " + latestEvent.type);
+                        if (DD) Log.d(TAG, "mProcessor.run() : latestEvent.time= " + latestEvent.time + " latestEvent.type= " + latestEvent.type);
 
                         if (latestEvent.shouldActOn && !latestEvent.didActOn) {
                             //do the action
