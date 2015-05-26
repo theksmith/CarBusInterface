@@ -1,3 +1,10 @@
+# Version 0.9 (5/25/2015)
+
++ Added action type for switching to last app (like ALT+TAB on PC), only works PRE Lollipop, example: *LAST_APP 
++ Increased android:versionCode (issue #2)
++ Modified setting in gradle.build to work with latest version of gradle (2.2.1)
+
+
 # Version 0.8 (8/21/2014)
 
 +	Re-organized project including a lot of renaming. The package name changed as well users of previous versions will end up with double installs. Simply remove the older version using Settings > Apps.
