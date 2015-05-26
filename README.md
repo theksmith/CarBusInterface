@@ -12,9 +12,9 @@ This is an evolution of the [Steering Wheel Interface app](https://github.com/th
 
 ## Copyright and License
 
-Copyright 2014 Kristoffer Smith and other contributors.
+Copyright 2015 Kristoffer Smith and other contributors.
 
-This project is licensed under the [MIT License](http://opensource.org/licenses/MIT) - i.e. do what ya want but give credit.
+This project is licensed under the [MIT License](http://opensource.org/licenses/MIT) - i.e. do what ya want, but give credit.
 
 
 ## Ongoing Development
@@ -23,7 +23,7 @@ Pull requests are welcome! Please contact me if you'd like to do a major re-work
 
 Project home: https://github.com/theksmith/CarBusInterface
 
-+	The source code project is setup for [Android Studio Beta 0.8.6](https://developer.android.com/sdk/installing/studio.html) but should move to Eclipse easily if you prefer that IDE.
++	The project is currently setup for [Android Studio 1.2.1.1](https://developer.android.com/sdk/installing/studio.html). If you get build errors, be sure you are opening the folder "Android Studio Project", not this root folder!
 
 +	No third party libraries are required.
 
