@@ -1,7 +1,9 @@
 package com.theksmith.android.car_bus_interface;
 
+import android.app.ActivityManager;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.ResolveInfo;
 import android.media.AudioManager;
 import android.net.Uri;
 import android.os.Handler;
@@ -9,6 +11,9 @@ import android.os.SystemClock;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.widget.Toast;
+
+import java.util.Arrays;
+import java.util.List;
 
 import net.dinglisch.android.tasker.TaskerIntent;
 
@@ -165,6 +170,108 @@ public class AndroidActions {
                 }
             });
         }
+    }
+
+    /**
+     * switches to most recent running app (like ALT+TAB shortcut on PC)
+     */
+    public void sysSwitchToLastApp() {
+        if (D) Log.d(TAG, "sysSwitchToLastApp()");
+
+        new Handler().post(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    final String ANDROID = "android";
+                    final String ANDROID_UI = "com.android.systemui";
+                    final String ANDROID_LAUNCHER = "com.android.launcher";
+
+                    //find the current launcher's package name
+                    String launcherPackageName = ANDROID_LAUNCHER;
+
+                    Intent intent = new Intent(Intent.ACTION_MAIN);
+                    intent.addCategory(Intent.CATEGORY_HOME);
+                    ActivityManager activityManager = (ActivityManager)mAppContext.getSystemService(Context.ACTIVITY_SERVICE);
+                    ResolveInfo resolveInfo = mAppContext.getPackageManager().resolveActivity(intent, intent.getFlags());
+
+                    if (resolveInfo.activityInfo != null && resolveInfo.activityInfo.packageName != "") {
+                        launcherPackageName = resolveInfo.activityInfo.packageName;
+                    }
+
+                    if (D) Log.d(TAG, "sysSwitchToLastApp() : launcherPackageName = " + launcherPackageName);
+
+                    //ignore system-ui components (keyboard) and the launcher (home screen) as possible apps to switch to
+                    String[] neverSwitchToPackageNames = {launcherPackageName, mAppContext.getApplicationInfo().packageName, ANDROID, ANDROID_UI, ""};
+
+                    //iterate recent apps
+                    String packageName;
+                    String frontPackageName = "";
+
+                    List<ActivityManager.RunningTaskInfo> tasks = activityManager.getRunningTasks(5);
+                    //List<ActivityManager.RecentTaskInfo> tasks = activityManager.getRecentTasks(5, ActivityManager.RECENT_IGNORE_UNAVAILABLE);
+                    
+                    for (ActivityManager.RunningTaskInfo task: tasks){
+                        packageName = task.topActivity.getPackageName();
+                        //packageName = task.baseIntent.getComponent().getPackageName();
+                        if (D) Log.d(TAG, "sysSwitchToLastApp() : packageName = " + packageName);
+
+                        //never switch to a dead or invalid app
+                        if (task.id > 0 && !Arrays.asList(neverSwitchToPackageNames).contains(packageName)) {
+                            //switch to the most-recent valid app that isn't already in the front
+                            if (frontPackageName != "" && packageName != frontPackageName) {
+                                if (D) Log.d(TAG, "sysSwitchToLastApp() : winner! packageName, task.id = " + packageName + ", " + task.id);
+                                activityManager.moveTaskToFront(task.id, ActivityManager.MOVE_TASK_NO_USER_ACTION);
+                                break;
+                            }
+                        }
+
+                        //prevent dead apps and system-ui type components showing up as the front app (because we want the real foreground app)
+                        if (task.id > 0 && packageName != ANDROID && packageName != ANDROID_UI) {
+                            frontPackageName = packageName;
+                        }
+                    }
+
+                    /*
+                    todo: above code will not work on Lollipop or newer, refactor to include alternative way of getting task history...
+                    code below is from stackexchange: http://stackoverflow.com/questions/24590533/how-to-get-recent-tasks-on-android-l
+
+                    //todo: prompt user to grant access for this app to access usage data
+                    ...
+
+                    //launch the correct settings area so user can grant access
+                    Intent intent2 = new Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS);
+                    mAppContext.sendBroadcast(intent2);
+
+                    String topPackageName ;
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                        UsageStatsManager mUsageStatsManager = (UsageStatsManager)getSystemService("usagestats");
+                        long time = System.currentTimeMillis();
+
+                        // We get usage stats for the last 10 seconds
+                        List<UsageStats> stats = mUsageStatsManager.queryUsageStats(UsageStatsManager.INTERVAL_DAILY, time - 1000*10, time);
+
+                        // Sort the stats by the last time used
+                        if(stats != null) {
+                            SortedMap<Long,UsageStats> mySortedMap = new TreeMap<Long,UsageStats>();
+                            for (UsageStats usageStats : stats) {
+                                mySortedMap.put(usageStats.getLastTimeUsed(),usageStats);
+                            }
+                            if(mySortedMap != null && !mySortedMap.isEmpty()) {
+                                topPackageName =  mySortedMap.get(mySortedMap.lastKey()).getPackageName();
+                            }
+                        }
+                    }
+                    */
+                } catch (Exception e) {
+                    Log.e(TAG, "sysSwitchToLastApp() : unexpected exception : exception= " + e.getMessage(), e);
+
+                    if (!mSilentErrors) {
+                        final String text = mAppName + ": " + mAppContext.getString(R.string.msg_error_last_app);
+                        Toast.makeText(mAppContext, text, Toast.LENGTH_SHORT).show();
+                    }
+                }
+            }
+        });
     }
 
     public void audioVolumeUp(final boolean visible) {
