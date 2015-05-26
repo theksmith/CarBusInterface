@@ -6,5 +6,6 @@
     <string name="msg_error_changing_volume">Error changing system volume</string>
     <string name="msg_error_implicit_intent">Error sending implicit intent with action/uri</string>
     <string name="msg_error_tasker">Error executing Tasker task</string>
+    <string name="msg_error_last_app">Error switching to last app</string>
 
 </resources>
