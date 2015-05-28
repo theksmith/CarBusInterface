@@ -112,8 +112,6 @@ public class CBIServiceMain extends Service {
     @Override
     public void onCreate() {
         super.onCreate();
-        
-        mNoticeBuilder = new Notification.Builder(this);
 
         if (D) Log.d(TAG, "onCreate()");
 
@@ -132,6 +130,8 @@ public class CBIServiceMain extends Service {
         stack.addParentStack(CBIActivityMain.class);
         stack.addNextIntent(intent);
         PendingIntent resultPendingIntent = stack.getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);
+
+        mNoticeBuilder = new Notification.Builder(this);
 
         mNoticeBuilder.setOngoing(true);
         mNoticeBuilder.setPriority(Notification.PRIORITY_LOW);
