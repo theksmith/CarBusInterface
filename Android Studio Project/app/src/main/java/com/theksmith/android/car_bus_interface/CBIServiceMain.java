@@ -70,7 +70,7 @@ public class CBIServiceMain extends Service {
     private static final int PERSISTENT_NOTIFICATION_ID = 0;
 
     private NotificationManager mNoticeManager;
-    private final Notification.Builder mNoticeBuilder;
+    private Notification.Builder mNoticeBuilder;
 
     private String mNoticeStatus;
     private String mNoticeError;
@@ -106,14 +106,14 @@ public class CBIServiceMain extends Service {
     public CBIServiceMain() {
         if (D) Log.d(TAG, "CBIServiceMain()");
 
-        mNoticeBuilder = new Notification.Builder(this);
-
         mBTAdapter = BluetoothAdapter.getDefaultAdapter();
     }
 
     @Override
     public void onCreate() {
         super.onCreate();
+        
+        mNoticeBuilder = new Notification.Builder(this);
 
         if (D) Log.d(TAG, "onCreate()");
 
