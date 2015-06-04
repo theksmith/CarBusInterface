@@ -8,8 +8,8 @@ android {
         applicationId "com.theksmith.android.car_bus_interface"
         minSdkVersion 16
         targetSdkVersion 19
-        versionCode 90
-        versionName "0.9"
+        versionCode 100
+        versionName "1.0"
     }
 
     buildTypes {
