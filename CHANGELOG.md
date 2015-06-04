@@ -1,6 +1,12 @@
+# Version 1.0 (6/4/2015)
+
++ Issue #5 fixed (error when building/running in lollipop) - thanks brendanclement!
++ Fixed crash if device lacks bluetooth capability
+
+
 # Version 0.9 (5/25/2015)
 
-+ Added action type for switching to last app (like ALT+TAB on PC), only works PRE Lollipop, example: *LAST_APP 
++ Added action type for switching to last app (like ALT+TAB on PC), only works PRE Lollipop, settings example: *LAST_APP 
 + Increased android:versionCode (issue #2)
 + Modified setting in gradle.build to work with latest version of gradle (2.2.1)
 

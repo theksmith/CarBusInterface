@@ -36,20 +36,27 @@ public class BluetoothListPreference extends ListPreference {
         CharSequence[] entries = new CharSequence[1];
         CharSequence[] values = new CharSequence[1];
 
-        final BluetoothAdapter adapter = BluetoothAdapter.getDefaultAdapter();
-        Set<BluetoothDevice> devices = adapter.getBondedDevices();
+        Set<BluetoothDevice> devices = null;
 
-        if (devices.size() > 0) {
-            entries = new CharSequence[devices.size()];
-            values = new CharSequence[devices.size()];
-            int i = 0;
-            for (BluetoothDevice device : devices) {
-                entries[i] = device.getName();
-                values[i] = device.getAddress();
-                i++;
+        final BluetoothAdapter adapter = BluetoothAdapter.getDefaultAdapter();
+
+        if (adapter != null) {
+            devices = adapter.getBondedDevices();
+
+            if (devices.size() > 0) {
+                entries = new CharSequence[devices.size()];
+                values = new CharSequence[devices.size()];
+                int i = 0;
+                for (BluetoothDevice device : devices) {
+                    entries[i] = device.getName();
+                    values[i] = device.getAddress();
+                    i++;
+                }
             }
-        } else {
-            entries[0] = context.getResources().getString(R.string.msg_btlist_empty);
+        }
+
+        if (devices == null || devices.size() <= 0) {
+            entries[0] = context.getResources().getString(R.string.msg_error_no_bluetooth);
             values[0] = "";
         }
 
