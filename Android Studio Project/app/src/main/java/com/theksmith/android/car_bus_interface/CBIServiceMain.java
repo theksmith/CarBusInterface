@@ -412,7 +412,8 @@ public class CBIServiceMain extends Service {
         if (D) Log.d(TAG, "btWriteBreak()");
 
         //we don't use btWriteData() here as we don't want to set mBTState to TX since this special case may never have a corresponding complete RX event to return mBTState to IDLE
-        final String data = String.valueOf((char)0x00);
+        //no longer sending just a null character here, see issue #10 on github for details
+        final String data = "\t" + ELM_COMMAND_TERMINATOR;
         mBTIOThread.write(data.getBytes());
 
         //give the device time to realize the break before whatever called this method tries to continue
