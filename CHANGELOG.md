@@ -1,3 +1,9 @@
+# Version 1.1 (1/7/2015)
+
++ Issue #10 fixed (not working reliably after upgrade to Lollipop 5.0.2 on Sony Xperia Z2 tablet)
++ Upgraded project to latest Android Studio (1.5.1) and to use latest SDK compiler (API 23)
+
+
 # Version 1.0 (6/4/2015)
 
 + Issue #5 fixed (error when building/running in lollipop) - thanks brendanclement!
